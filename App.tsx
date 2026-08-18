@@ -1,12 +1,12 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import TelaListaPontos from './TelaListaPontos';
 import TelaDetalhePonto from './TelaDetalhePonto';
 
-const Stack = createStackNavigator();
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
@@ -18,7 +18,7 @@ export default function App() {
           headerStyle: { backgroundColor: '#121214' },
           headerTintColor: '#00b37e',
           headerTitleStyle: { fontWeight: 'bold', color: '#f1f1f1' },
-          cardStyle: { backgroundColor: '#121214' },
+          contentStyle: { backgroundColor: '#121214' },
         }}
       >
         <Stack.Screen
