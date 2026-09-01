@@ -1,38 +1,39 @@
 import React from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {StatusBar} from 'expo-status-bar';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
-import TelaListaPontos from './TelaListaPontos';
-import TelaDetalhePonto from './TelaDetalhePonto';
+import TelaListaPontos from './src/screens/TelaListaPontos';
+import TelaDetalhePonto from './src/screens/TelaDetalhePonto';
+import { theme } from './src/theme/theme';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  return (
-    <NavigationContainer>
-      <StatusBar style="light" />
-      <Stack.Navigator
-        initialRouteName="TelaListaPontos"
-        screenOptions={{
-          headerStyle: { backgroundColor: '#121214' },
-          headerTintColor: '#00b37e',
-          headerTitleStyle: { fontWeight: 'bold', color: '#f1f1f1' },
-          contentStyle: { backgroundColor: '#121214' },
-        }}
-      >
-        <Stack.Screen
-          name="TelaListaPontos"
-          component={TelaListaPontos}
-          options={{ title: 'Pontos de Coleta' }}
-        />
-        <Stack.Screen
-          name="TelaDetalhePonto"
-          component={TelaDetalhePonto}
-          options={{ title: 'Detalhes do Ponto' }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+    return (
+        <NavigationContainer>
+            <StatusBar style="light"/>
+            <Stack.Navigator
+                initialRouteName="TelaListaPontos"
+                screenOptions={{
+                    headerStyle: {backgroundColor: theme.colors.background},
+                    headerTintColor: theme.colors.primary,
+                    headerTitleStyle: {fontWeight: 'bold', color: theme.colors.text},
+                    contentStyle: {backgroundColor: theme.colors.background},
+                }}
+            >
+                <Stack.Screen
+                    name="TelaListaPontos"
+                    component={TelaListaPontos}
+                    options={{headerShown: false}}
+                />
+                <Stack.Screen
+                    name="TelaDetalhePonto"
+                    component={TelaDetalhePonto}
+                    options={{title: 'Detalhes do Ponto'}}
+                />
+            </Stack.Navigator>
+        </NavigationContainer>
+    );
 }
 

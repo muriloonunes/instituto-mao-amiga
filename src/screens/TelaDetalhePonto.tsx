@@ -1,6 +1,8 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
-import {Ponto, pontoMock} from './TelaListaPontos';
+import {ScrollView, StyleSheet, Text, View} from 'react-native';
+import {pontosMock} from "../mocks/pontosMock";
+import {Ponto} from "../types/produto";
+import {theme} from "../theme/theme";
 
 function PontoDetalhe({ponto}: { ponto: Ponto }) {
     return (
@@ -16,16 +18,14 @@ function PontoDetalhe({ponto}: { ponto: Ponto }) {
             <Text style={styles.diasHorarios}>{ponto.diasHorarios}</Text>
 
             <Text style={styles.label}>📦 Atendimento</Text>
-            <View style={styles.tagFuncionamento}>
-                <Text style={styles.funcionamento}>{ponto.funcionamento}</Text>
-            </View>
+            <Text style={styles.funcionamento}>{ponto.funcionamento}</Text>
         </View>
     );
 }
 
 function TelaDetalhePonto({route}: any) {
     const {pontoId} = route.params;
-    const ponto = pontoMock.find((item) => item.id === pontoId);
+    const ponto = pontosMock.find((item) => item.id === pontoId);
 
     if (!ponto) {
         return (
@@ -36,9 +36,9 @@ function TelaDetalhePonto({route}: any) {
     }
 
     return (
-        <View>
+        <ScrollView style={styles.container} contentContainerStyle={styles.detalheScroll}>
             <PontoDetalhe ponto={ponto}/>
-        </View>
+        </ScrollView>
     );
 }
 
@@ -47,68 +47,57 @@ export default TelaDetalhePonto;
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#121214',
+        backgroundColor: theme.colors.background,
     },
     detalheScroll: {
-        padding: 16,
-        paddingBottom: 32,
+        padding: theme.spacing['2xl'],
+        paddingBottom: theme.spacing['3xl'],
     },
     cardDetalhe: {
-        backgroundColor: '#202024',
-        borderRadius: 16,
-        padding: 20,
+        backgroundColor: theme.colors.card,
+        borderRadius: theme.borderRadius.lg,
+        padding: theme.spacing['2xl'],
         borderWidth: 1,
-        borderColor: '#29292e',
+        borderColor: theme.colors.border,
         width: '100%',
     },
     nome: {
-        fontSize: 22,
+        fontSize: theme.fontSize['3xl'],
         fontWeight: 'bold',
-        color: '#f1f1f1',
-        marginBottom: 8,
+        color: theme.colors.text,
+        marginBottom: theme.spacing.md,
     },
     divisor: {
         height: 1,
-        backgroundColor: '#29292e',
-        marginVertical: 12,
+        backgroundColor: theme.colors.border,
     },
     label: {
-        fontSize: 14,
+        fontSize: theme.fontSize.md,
         fontWeight: 'bold',
-        color: '#00b37e',
-        marginTop: 12,
-        marginBottom: 4,
+        color: theme.colors.primary,
+        marginTop: theme.spacing.xl,
+        marginBottom: theme.spacing.xs,
     },
     endereco: {
-        fontSize: 15,
-        color: '#c4c4cc',
+        fontSize: theme.fontSize.lg,
+        color: theme.colors.textSecondary,
         lineHeight: 22,
     },
     diasHorarios: {
-        fontSize: 14,
-        color: '#8d8d99',
+        fontSize: theme.fontSize.md,
+        color: theme.colors.textMuted,
         lineHeight: 20,
     },
-    tagFuncionamento: {
-        backgroundColor: '#121214',
-        borderRadius: 8,
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        marginTop: 6,
-        alignSelf: 'flex-start',
-        borderLeftWidth: 4,
-        borderLeftColor: '#00b37e',
-    },
     funcionamento: {
-        fontSize: 13,
+        fontSize: theme.fontSize.sm,
         fontWeight: '600',
-        color: '#00b37e',
+        color: theme.colors.primary,
         lineHeight: 18,
     },
     erroText: {
-        color: '#f75a68',
-        fontSize: 16,
+        color: theme.colors.danger,
+        fontSize: theme.fontSize.xl,
         textAlign: 'center',
-        marginTop: 40,
+        marginTop: theme.spacing['4xl'],
     },
 });
