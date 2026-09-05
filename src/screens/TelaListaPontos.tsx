@@ -1,5 +1,6 @@
 import React, {useMemo, useState} from 'react';
-import {FlatList, StyleSheet, Text, TextInput} from 'react-native';
+import {FlatList, Pressable, StyleSheet, Text, TextInput} from 'react-native';
+import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {pontosMock} from "../mocks/pontosMock";
 import {PontoItem} from "../components/PontoItem";
@@ -10,6 +11,8 @@ function TelaListaPontos({navigation}: any) {
     const pontosFiltrados = useMemo(() => {
         return pontosMock.filter(ponto => ponto.nome.toLowerCase().includes(busca.toLowerCase()))
     }, [busca])
+
+    const [modalVisible, setModalVisible] = useState(false);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -22,6 +25,12 @@ function TelaListaPontos({navigation}: any) {
                 onChangeText={setBusca}
                 autoCorrect={false}
             />
+            <Pressable
+                style={styles.floatingButton}
+                onPress={() => setModalVisible(true)}
+            >
+                <MaterialDesignIcons name='plus' color='white' size={32}/>
+            </Pressable>
             <FlatList
                 data={pontosFiltrados}
                 keyExtractor={(item) => item.id.toString()}
@@ -52,7 +61,7 @@ const styles = StyleSheet.create({
         marginTop: theme.spacing['2xl'],
     },
     inputBusca: {
-        backgroundColor: theme.colors.card,
+        backgroundColor: theme.colors.cardBackground,
         color: theme.colors.text,
         height: 50,
         borderRadius: theme.borderRadius.sm,
@@ -62,10 +71,27 @@ const styles = StyleSheet.create({
         marginTop: theme.spacing['2xl'],
         marginBottom: theme.spacing.md,
         borderWidth: 1,
-        borderColor: theme.colors.border,
+        borderColor: theme.colors.cardBorder,
     },
     listaContainer: {
         padding: theme.spacing['2xl'],
         paddingBottom: theme.spacing['3xl'],
+    },
+    floatingButton: {
+        backgroundColor: theme.colors.primary,
+        width: 60,
+        height: 60,
+        borderRadius: theme.borderRadius.xl,
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 40,
+        right: 30,
+        elevation: 5,
+        shadowColor: theme.colors.shadow,
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        zIndex: 999,
     },
 });

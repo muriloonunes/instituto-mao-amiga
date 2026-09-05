@@ -54,11 +54,11 @@ const styles = StyleSheet.create({
         paddingBottom: theme.spacing['3xl'],
     },
     cardDetalhe: {
-        backgroundColor: theme.colors.card,
-        borderRadius: theme.borderRadius.lg,
+        backgroundColor: theme.colors.cardBackground,
+        borderRadius: theme.borderRadius.xl,
         padding: theme.spacing['2xl'],
         borderWidth: 1,
-        borderColor: theme.colors.border,
+        borderColor: theme.colors.cardBorder,
         width: '100%',
     },
     nome: {
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     },
     divisor: {
         height: 1,
-        backgroundColor: theme.colors.border,
+        backgroundColor: theme.colors.cardBorder,
     },
     label: {
         fontSize: theme.fontSize.md,

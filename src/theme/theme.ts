@@ -1,15 +1,18 @@
 export const theme = {
   colors: {
     background: '#121214',
-    card: '#202024',
-    border: '#29292e',
+    modalBackground: 'rgba(0, 0, 0, 0.75)',
+    cardBackground: '#202024',
+    cardBorder: '#29292e',
     primary: '#00b37e',
     text: '#f1f1f1',
     textSecondary: '#c4c4cc',
     textMuted: '#8d8d99',
+    textWhite: '#ffffff',
     placeholder: '#7c7c8a',
     danger: '#f75a68',
     shadow: '#000',
+    iconSurface: 'rgba(0, 179, 126, 0.12)',
   },
   fontSize: {
     xs: 12,
@@ -23,8 +26,8 @@ export const theme = {
   },
   borderRadius: {
     sm: 8,
-    md: 12,
-    lg: 16,
+    lg: 12,
+    xl: 16,
   },
   spacing: {
     xs: 4,

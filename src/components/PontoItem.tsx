@@ -15,12 +15,12 @@ export function PontoItem({ponto, onPress}: { ponto: Ponto; onPress: () => void 
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: theme.colors.card,
-        borderRadius: theme.borderRadius.md,
+        backgroundColor: theme.colors.cardBackground,
+        borderRadius: theme.borderRadius.lg,
         padding: theme.spacing.lg,
         marginBottom: theme.spacing['2xl'],
         borderWidth: 1,
-        borderColor: theme.colors.border,
+        borderColor: theme.colors.cardBorder,
     },
     nome: {
         fontSize: theme.fontSize['2xl'],
