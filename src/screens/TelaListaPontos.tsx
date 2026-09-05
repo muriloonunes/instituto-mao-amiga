@@ -5,6 +5,7 @@ import {SafeAreaView} from "react-native-safe-area-context";
 import {pontosMock} from "../mocks/pontosMock";
 import {PontoItem} from "../components/PontoItem";
 import {theme} from "../theme/theme";
+import {NovaDoacaoModal} from "../components/NovaDoacaoModal";
 
 function TelaListaPontos({navigation}: any) {
     const [busca, setBusca] = useState('')
@@ -25,6 +26,7 @@ function TelaListaPontos({navigation}: any) {
                 onChangeText={setBusca}
                 autoCorrect={false}
             />
+            <NovaDoacaoModal visible={modalVisible} onClose={() => setModalVisible(false)} onSave={() => {/*todo*/}}/>
             <Pressable
                 style={styles.floatingButton}
                 onPress={() => setModalVisible(true)}

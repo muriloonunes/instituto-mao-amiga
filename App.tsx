@@ -5,7 +5,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import TelaListaPontos from './src/screens/TelaListaPontos';
 import TelaDetalhePonto from './src/screens/TelaDetalhePonto';
-import { theme } from './src/theme/theme';
+import {theme} from './src/theme/theme';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,7 +18,7 @@ export default function App() {
                 screenOptions={{
                     headerStyle: {backgroundColor: theme.colors.background},
                     headerTintColor: theme.colors.primary,
-                    headerTitleStyle: {fontWeight: 'bold', color: theme.colors.text},
+                    headerTitleStyle: {fontWeight: 'bold'},
                     contentStyle: {backgroundColor: theme.colors.background},
                 }}
             >
