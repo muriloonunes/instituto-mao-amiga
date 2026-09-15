@@ -41,6 +41,7 @@ export function NovaDoacaoModal(
         setNomeItem('')
         setQtdItem('')
         setPontoSelecionado(null)
+        setDropdownAberto(false)
         setErros({})
     }
 
@@ -83,7 +84,7 @@ export function NovaDoacaoModal(
             onRequestClose={fechar}
         >
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.modalBackdrop}
             >
                 <Pressable
@@ -141,6 +142,8 @@ export function NovaDoacaoModal(
                                     erros.qtdItem ? styles.inputError : null
                                 ]}
                                 keyboardType='number-pad'
+                                placeholder="2"
+                                placeholderTextColor={theme.colors.placeholder}
                                 value={qtdItem}
                                 onChangeText={(text) => {
                                     setQtdItem(text);
@@ -302,8 +305,8 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     closeButton: {
-        width: 32,
-        height: 32,
+        width: 44,
+        height: 44,
         borderRadius: theme.borderRadius.lg,
         backgroundColor: theme.colors.cardBorder,
         alignItems: 'center',
@@ -409,6 +412,10 @@ const styles = StyleSheet.create({
     },
     buttonCancel: {
         paddingVertical: 10,
+        minHeight: 44,
+        minWidth: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
         paddingHorizontal: theme.spacing.lg,
         borderRadius: theme.borderRadius.lg,
         backgroundColor: theme.colors.cardBorder,
@@ -421,9 +428,11 @@ const styles = StyleSheet.create({
     buttonSave: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: 6,
-        paddingVertical: 10,
-        paddingHorizontal: 18,
+        minWidth: 44,
+        minHeight: 44,
+        paddingHorizontal: theme.spacing.lg,
         borderRadius: theme.borderRadius.lg,
         backgroundColor: theme.colors.primary,
     },
