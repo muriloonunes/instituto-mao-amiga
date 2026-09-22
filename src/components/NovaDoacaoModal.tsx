@@ -15,11 +15,12 @@ import {theme} from "../theme/theme";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import React, {useState} from "react";
 import {pontosMock} from "../mocks/pontosMock";
+import {Doacao} from "../types/doacao";
 
 type NovoPontoModalProps = {
     visible: boolean;
     onClose: () => void;
-    onSave: (ponto: Ponto) => void;
+    onSave: (doacao: Doacao) => void;
 };
 
 type ErrosForm = {
@@ -73,6 +74,12 @@ export function NovaDoacaoModal(
 
     function salvar() {
         if (!validar()) return
+        onSave({
+            id: Date.now(),
+            nome: nomeItem.trim(),
+            quantidade: Number(qtdItem),
+            pontoId: pontoSelecionado!.id
+        })
         fechar()
     }
 
