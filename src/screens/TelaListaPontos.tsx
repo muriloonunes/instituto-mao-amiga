@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {FlatList, Pressable, StyleSheet, Text, TextInput} from 'react-native';
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import {SafeAreaView} from "react-native-safe-area-context";
@@ -7,33 +7,13 @@ import {PontoItem} from "../components/PontoItem";
 import {theme} from "../theme/theme";
 import {NovaDoacaoModal} from "../components/NovaDoacaoModal";
 import {Doacao} from "../types/doacao";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const CHAVE_DOACOES = '@mao_amiga:doacoes';
+import {salvarDoacao} from "../services/doacoesStorage";
 
 function TelaListaPontos({navigation}: any) {
     const [busca, setBusca] = useState('')
     const pontosFiltrados = useMemo(() => {
         return pontosMock.filter(ponto => ponto.nome.toLowerCase().includes(busca.toLowerCase()))
     }, [busca])
-
-    const [doacoes, setDoacoes] = useState<Doacao[]>([])
-
-    useEffect(() => {
-        AsyncStorage.getItem(CHAVE_DOACOES).then((salvo) => {
-            if (salvo) setDoacoes(JSON.parse(salvo));
-        });
-    }, []);
-
-    function salvarDoacoes(novaDoacao: Doacao) {
-        if (!novaDoacao) return
-
-        setDoacoes((prevDoacoes) => {
-            const doacoesAtualizadas = [...prevDoacoes, novaDoacao];
-            AsyncStorage.setItem(CHAVE_DOACOES, JSON.stringify(doacoesAtualizadas));
-            return doacoesAtualizadas;
-        })
-    }
 
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -52,7 +32,7 @@ function TelaListaPontos({navigation}: any) {
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
                 onSave={(doacao: Doacao) => {
-                    salvarDoacoes(doacao)
+                    salvarDoacao(doacao)
                 }}/>
             <Pressable
                 style={styles.floatingButton}

@@ -3,4 +3,5 @@ export type Doacao = {
     nome: string;
     quantidade: number;
     pontoId: number;
+    criadoEm: Date;
 }

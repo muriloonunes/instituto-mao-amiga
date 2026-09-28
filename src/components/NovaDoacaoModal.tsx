@@ -78,7 +78,8 @@ export function NovaDoacaoModal(
             id: Date.now(),
             nome: nomeItem.trim(),
             quantidade: Number(qtdItem),
-            pontoId: pontoSelecionado!.id
+            pontoId: pontoSelecionado!.id,
+            criadoEm: new Date(),
         })
         fechar()
     }
