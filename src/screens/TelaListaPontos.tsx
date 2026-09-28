@@ -9,7 +9,7 @@ import {NovaDoacaoModal} from "../components/NovaDoacaoModal";
 import {Doacao} from "../types/doacao";
 import {salvarDoacao} from "../services/doacoesStorage";
 
-function TelaListaPontos({navigation}: any) {
+export function TelaListaPontos({navigation}: any) {
     const [busca, setBusca] = useState('')
     const pontosFiltrados = useMemo(() => {
         return pontosMock.filter(ponto => ponto.nome.toLowerCase().includes(busca.toLowerCase()))
@@ -33,13 +33,9 @@ function TelaListaPontos({navigation}: any) {
                 onClose={() => setModalVisible(false)}
                 onSave={(doacao: Doacao) => {
                     salvarDoacao(doacao)
-                }}/>
-            <Pressable
-                style={styles.floatingButton}
-                onPress={() => setModalVisible(true)}
-            >
-                <MaterialDesignIcons name='plus' color='white' size={32}/>
-            </Pressable>
+                }}
+            />
+            <FAB onPress={() => setModalVisible(true)}/>
             <FlatList
                 data={pontosFiltrados}
                 keyExtractor={(item) => item.id.toString()}
@@ -55,7 +51,16 @@ function TelaListaPontos({navigation}: any) {
     );
 }
 
-export default TelaListaPontos;
+export function FAB({onPress}: { onPress: () => void }) {
+    return (
+        <Pressable
+            style={styles.floatingButton}
+            onPress={onPress}
+        >
+            <MaterialDesignIcons name='plus' color='white' size={32}/>
+        </Pressable>
+    );
+}
 
 const styles = StyleSheet.create({
     container: {
