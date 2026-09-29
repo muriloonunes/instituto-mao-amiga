@@ -2,7 +2,7 @@ import {Ponto} from "../types/produto";
 import {StyleSheet, TouchableOpacity, Text} from "react-native";
 import {theme} from "../theme/theme";
 
-export function PontoItem({ponto, onPress}: { ponto: Ponto; onPress: () => void }) {
+export function CardItem({ponto, onPress}: { ponto: Ponto; onPress: () => void }) {
     return (
         <TouchableOpacity style={styles.card} activeOpacity={0.75} onPress={onPress}>
             <Text style={styles.nome}>{ponto.nome}</Text>

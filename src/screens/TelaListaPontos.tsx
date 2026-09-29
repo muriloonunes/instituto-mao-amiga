@@ -2,7 +2,7 @@ import React, {useMemo, useState} from 'react';
 import {FlatList, StyleSheet, Text, TextInput, useWindowDimensions} from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {pontosMock} from "../mocks/pontosMock";
-import {PontoItem} from "../components/PontoItem";
+import {CardItem} from "../components/CardItem";
 import {theme} from "../theme/theme";
 
 export function TelaListaPontos({navigation}: any) {
@@ -31,7 +31,7 @@ export function TelaListaPontos({navigation}: any) {
                 data={pontosFiltrados}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({item}) => (
-                    <PontoItem
+                    <CardItem
                         ponto={item}
                         onPress={() => navigation.navigate('TelaDetalhePonto', {pontoId: item.id})}
                     />

@@ -1,16 +1,16 @@
 import {Doacao} from "../types/doacao";
 import {pontosMock} from "../mocks/pontosMock";
-import {StyleSheet, Text, View} from "react-native";
+import {Pressable, StyleSheet, Text, View} from "react-native";
 import {theme} from "../theme/theme";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 
-export function CardDoacao({doacao}: { doacao: Doacao }) {
+export function CardDoacao({doacao, onPress}: { doacao: Doacao, onPress: () => void }) {
     const ponto = pontosMock.find(ponto => ponto.id === doacao.pontoId);
 
     const dataFormatada = new Date(doacao.criadoEm).toLocaleDateString();
 
     return (
-        <View style={styles.card}>
+        <Pressable style={styles.card} onPress={onPress}>
             <View style={styles.header}>
                 <View style={styles.itemInfo}>
                     <View style={styles.iconWrapper}>
@@ -53,7 +53,7 @@ export function CardDoacao({doacao}: { doacao: Doacao }) {
                     </Text>
                 </View>
             </View>
-        </View>
+        </Pressable>
     )
 }
 

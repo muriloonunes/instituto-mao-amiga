@@ -13,6 +13,7 @@ import MaterialDesignIcons from "@react-native-vector-icons/material-design-icon
 import {theme} from "../theme/theme";
 import {Doacao} from "../types/doacao";
 import {CardDoacao} from "../components/CardDoacao";
+import {useNavigation} from "@react-navigation/native";
 
 type TelaDoacoesProps = {
     doacoes: Doacao[];
@@ -20,6 +21,7 @@ type TelaDoacoesProps = {
 };
 
 export function TelaDoacoes({doacoes, onNovaDoacao}: TelaDoacoesProps) {
+    const navigation = useNavigation<any>();
     const {width} = useWindowDimensions();
     const telaLarga = width >= 768;
 
@@ -34,7 +36,10 @@ export function TelaDoacoes({doacoes, onNovaDoacao}: TelaDoacoesProps) {
             <FlatList
                 data={doacoes}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={({item}) => CardDoacao({doacao: item})}
+                renderItem={({item}) => CardDoacao({
+                    doacao: item,
+                    onPress: () => navigation.navigate('TelaDetalheDoacao', {doacao: item})
+                })}
                 contentContainerStyle={[
                     styles.listContent,
                     doacoes.length === 0 && styles.emptyListContent,

@@ -4,26 +4,7 @@ import {pontosMock} from "../mocks/pontosMock";
 import {Ponto} from "../types/produto";
 import {theme} from "../theme/theme";
 
-function PontoDetalhe({ponto}: { ponto: Ponto }) {
-    return (
-        <View style={styles.cardDetalhe}>
-            <Text style={styles.nome}>{ponto.nome}</Text>
-
-            <View style={styles.divisor}/>
-
-            <Text style={styles.label}>📍 Endereço</Text>
-            <Text style={styles.endereco}>{ponto.endereco}</Text>
-
-            <Text style={styles.label}>🕒 Dias e Horários</Text>
-            <Text style={styles.diasHorarios}>{ponto.diasHorarios}</Text>
-
-            <Text style={styles.label}>📦 Atendimento</Text>
-            <Text style={styles.funcionamento}>{ponto.funcionamento}</Text>
-        </View>
-    );
-}
-
-function TelaDetalhePonto({route}: any) {
+export function TelaDetalhePonto({route}: any) {
     const {pontoId} = route.params;
     const ponto = pontosMock.find((item) => item.id === pontoId);
 
@@ -42,7 +23,24 @@ function TelaDetalhePonto({route}: any) {
     );
 }
 
-export default TelaDetalhePonto;
+function PontoDetalhe({ponto}: { ponto: Ponto }) {
+    return (
+        <View style={styles.cardDetalhe}>
+            <Text style={styles.nome}>{ponto.nome}</Text>
+
+            <View style={styles.divisor}/>
+
+            <Text style={styles.label}>📍 Endereço</Text>
+            <Text style={styles.endereco}>{ponto.endereco}</Text>
+
+            <Text style={styles.label}>🕒 Dias e Horários</Text>
+            <Text style={styles.diasHorarios}>{ponto.diasHorarios}</Text>
+
+            <Text style={styles.label}>📦 Atendimento</Text>
+            <Text style={styles.funcionamento}>{ponto.funcionamento}</Text>
+        </View>
+    );
+}
 
 const styles = StyleSheet.create({
     container: {
