@@ -20,13 +20,13 @@ function getTabBarStyle(telaLarga: boolean): ViewStyle {
                 width: 88,
                 backgroundColor: "transparent",
                 borderRightWidth: 0.33,
-                borderRightColor: "rgba(60, 60, 67, 0.29)",
+                borderRightColor: theme.colors.borderMedium,
             }
             : {
                 position: "absolute",
                 backgroundColor: "transparent",
                 borderTopWidth: 0.33,
-                borderTopColor: "rgba(60, 60, 67, 0.29)",
+                borderTopColor: theme.colors.borderMedium,
                 elevation: 0,
             };
     }
@@ -35,9 +35,9 @@ function getTabBarStyle(telaLarga: boolean): ViewStyle {
         return telaLarga
             ? {
                 width: 80,
-                backgroundColor: theme.colors.cardBackground,
+                backgroundColor: theme.colors.surfaceElevated,
                 borderRightWidth: 1,
-                borderRightColor: theme.colors.cardBorder,
+                borderRightColor: theme.colors.borderSubtle,
                 paddingVertical: 16,
                 elevation: 2,
             }
@@ -47,10 +47,10 @@ function getTabBarStyle(telaLarga: boolean): ViewStyle {
                 left: 20,
                 right: 20,
                 height: 68,
-                backgroundColor: theme.colors.cardBackground,
+                backgroundColor: theme.colors.surfaceElevated,
                 borderRadius: 34,
                 borderWidth: 1,
-                borderColor: theme.colors.cardBorder,
+                borderColor: theme.colors.borderMedium,
                 elevation: 8,
                 paddingTop: 8,
                 paddingBottom: 8,
@@ -62,15 +62,15 @@ function getTabBarStyle(telaLarga: boolean): ViewStyle {
         ? {
             width: 96,
             borderRightWidth: 1,
-            borderRightColor: theme.colors.cardBorder,
-            backgroundColor: theme.colors.cardBackground,
+            borderRightColor: theme.colors.borderSubtle,
+            backgroundColor: theme.colors.surfaceElevated,
             paddingVertical: 16,
         }
         : {
             height: 68,
             borderTopWidth: 1,
-            borderTopColor: theme.colors.cardBorder,
-            backgroundColor: theme.colors.cardBackground,
+            borderTopColor: theme.colors.borderMedium,
+            backgroundColor: theme.colors.surfaceElevated,
         };
 }
 
@@ -88,7 +88,7 @@ export function BottomBar() {
                     tabBarPosition: dimensions.width >= 768 ? 'left' : 'bottom',
                     tabBarVariant: telaLarga ? 'material' : 'uikit',
                     tabBarLabelPosition: 'below-icon',
-                    tabBarActiveTintColor: theme.colors.primary,
+                    tabBarActiveTintColor: theme.colors.primaryVibrant,
                     tabBarInactiveTintColor: theme.colors.textMuted,
                     tabBarStyle: getTabBarStyle(telaLarga),
                     tabBarLabelStyle: {
@@ -125,13 +125,13 @@ export function BottomBar() {
                                     style={[
                                         styles.androidPill,
                                         focused && {
-                                            backgroundColor: theme.colors.primaryLight || '#EADDFF',
+                                            backgroundColor: theme.colors.primaryLight,
                                         },
                                     ]}
                                 >
                                     <MaterialDesignIcons
                                         name={iconName as any}
-                                        color={focused ? theme.colors.primary : color}
+                                        color={focused ? theme.colors.primaryVibrant : color}
                                         size={24}
                                     />
                                 </View>

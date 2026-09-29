@@ -64,17 +64,17 @@ const styles = StyleSheet.create({
     nome: {
         fontSize: theme.fontSize['3xl'],
         fontWeight: 'bold',
-        color: theme.colors.text,
+        color: theme.colors.textWhite,
         marginBottom: theme.spacing.md,
     },
     divisor: {
         height: 1,
-        backgroundColor: theme.colors.cardBorder,
+        backgroundColor: theme.colors.borderSubtle,
     },
     label: {
         fontSize: theme.fontSize.md,
         fontWeight: 'bold',
-        color: theme.colors.primary,
+        color: theme.colors.primaryVibrant,
         marginTop: theme.spacing.xl,
         marginBottom: theme.spacing.xs,
     },
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     funcionamento: {
         fontSize: theme.fontSize.sm,
         fontWeight: '600',
-        color: theme.colors.primary,
+        color: theme.colors.text,
         lineHeight: 18,
     },
     erroText: {

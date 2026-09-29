@@ -75,15 +75,15 @@ const styles = StyleSheet.create({
         elevation: 6,
         shadowColor: '#000',
         shadowOffset: {width: 0, height: 3},
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.35,
         shadowRadius: 4,
     },
     fabButtonIOS: {
         borderRadius: 25,
         shadowColor: theme.colors.primary,
         shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.45,
-        shadowRadius: 6,
+        shadowOpacity: 0.5,
+        shadowRadius: 8,
     },
     fabButtonRail: {
         width: 48,
@@ -91,12 +91,13 @@ const styles = StyleSheet.create({
         borderRadius: 16,
     },
     fabHovered: {
-        backgroundColor: '#00c78c',
+        backgroundColor: theme.colors.primaryHover,
         transform: [{scale: 1.06}],
     },
     fabPressed: {
+        backgroundColor: theme.colors.primaryPressed,
         transform: [{scale: 0.94}],
-        opacity: 0.9,
+        opacity: 0.92,
     },
     fabRailLabel: {
         fontSize: 11,

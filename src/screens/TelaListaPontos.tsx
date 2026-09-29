@@ -9,7 +9,7 @@ export function TelaListaPontos({navigation}: any) {
     const {width} = useWindowDimensions();
     const telaLarga = width >= 768;
 
-    const paddingInferior = telaLarga ? theme.spacing['3xl'] : 65;
+    const paddingInferior = telaLarga ? theme.spacing['3xl'] : 96;
 
     const [busca, setBusca] = useState('');
     const pontosFiltrados = useMemo(() => {
@@ -38,7 +38,7 @@ export function TelaListaPontos({navigation}: any) {
                 )}
                 contentContainerStyle={[
                     styles.listaContainer,
-                    {paddingBottom: paddingInferior}
+                    {paddingBottom: paddingInferior},
                 ]}
             />
         </SafeAreaView>
@@ -51,24 +51,24 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.background,
     },
     titleText: {
-        color: theme.colors.text,
+        color: theme.colors.textWhite,
         fontSize: theme.fontSize['4xl'],
         fontWeight: 'bold',
         marginLeft: theme.spacing['2xl'],
         marginTop: theme.spacing['2xl'],
     },
     inputBusca: {
-        backgroundColor: theme.colors.cardBackground,
+        backgroundColor: theme.colors.surfaceInput,
         color: theme.colors.text,
         height: 50,
-        borderRadius: theme.borderRadius.sm,
+        borderRadius: theme.borderRadius.lg,
         paddingHorizontal: theme.spacing['2xl'],
         fontSize: theme.fontSize.xl,
         marginHorizontal: theme.spacing['2xl'],
         marginTop: theme.spacing['2xl'],
         marginBottom: theme.spacing.md,
         borderWidth: 1,
-        borderColor: theme.colors.cardBorder,
+        borderColor: theme.colors.borderSubtle,
     },
     listaContainer: {
         padding: theme.spacing['2xl'],

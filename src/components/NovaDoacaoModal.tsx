@@ -106,7 +106,7 @@ export function NovaDoacaoModal(
                                 <MaterialDesignIcons
                                     name="package-variant-closed-plus"
                                     size={20}
-                                    color={theme.colors.primary}
+                                    color={theme.colors.primaryVibrant}
                                 />
                             </View>
                             <Text style={styles.modalTitle}>Registrar Nova Doação</Text>
@@ -228,7 +228,7 @@ export function NovaDoacaoModal(
                                                         <MaterialDesignIcons
                                                             name="check"
                                                             size={18}
-                                                            color={theme.colors.primary}
+                                                            color={theme.colors.primaryVibrant}
                                                         />
                                                     )}
                                                 </TouchableOpacity>
@@ -272,19 +272,19 @@ const styles = StyleSheet.create({
         padding: theme.spacing.xl,
     },
     modalCard: {
-        backgroundColor: theme.colors.cardBackground,
+        backgroundColor: theme.colors.surfaceModal,
         borderRadius: theme.borderRadius.xl,
         borderWidth: 1,
-        borderColor: theme.colors.cardBorder,
+        borderColor: theme.colors.borderMedium,
         width: '100%',
         maxWidth: 500,
         maxHeight: '90%',
         padding: theme.spacing.xl,
         shadowColor: theme.colors.shadow,
-        shadowOffset: {width: 0, height: 10},
-        shadowOpacity: 0.4,
-        shadowRadius: 20,
-        elevation: 10,
+        shadowOffset: {width: 0, height: 12},
+        shadowOpacity: 0.55,
+        shadowRadius: 24,
+        elevation: 12,
     },
     modalHeader: {
         flexDirection: 'row',
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingBottom: theme.spacing.lg,
         borderBottomWidth: 1,
-        borderBottomColor: theme.colors.cardBorder,
+        borderBottomColor: theme.colors.borderSubtle,
     },
     modalHeaderTitleGroup: {
         flexDirection: 'row',
@@ -308,15 +308,17 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     modalTitle: {
-        color: theme.colors.text,
+        color: theme.colors.textWhite,
         fontSize: theme.fontSize.xl,
         fontWeight: 'bold',
     },
     closeButton: {
-        width: 44,
-        height: 44,
+        width: 36,
+        height: 36,
         borderRadius: theme.borderRadius.lg,
-        backgroundColor: theme.colors.cardBorder,
+        backgroundColor: theme.colors.surfaceElevated,
+        borderWidth: 1,
+        borderColor: theme.colors.borderSubtle,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -346,22 +348,22 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     modalInput: {
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.surfaceInput,
         color: theme.colors.text,
         height: 46,
         borderRadius: theme.borderRadius.lg,
         paddingHorizontal: theme.spacing.md,
         fontSize: theme.fontSize.md,
         borderWidth: 1,
-        borderColor: theme.colors.cardBorder,
+        borderColor: theme.colors.borderSubtle,
     },
     selectTrigger: {
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.surfaceInput,
         height: 46,
         borderRadius: theme.borderRadius.lg,
         paddingHorizontal: theme.spacing.md,
         borderWidth: 1,
-        borderColor: theme.colors.cardBorder,
+        borderColor: theme.colors.borderSubtle,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -376,8 +378,8 @@ const styles = StyleSheet.create({
         color: theme.colors.placeholder,
     },
     dropdownContainer: {
-        backgroundColor: theme.colors.background,
-        borderColor: theme.colors.cardBorder,
+        backgroundColor: theme.colors.surfaceInput,
+        borderColor: theme.colors.borderMedium,
         borderWidth: 1,
         borderRadius: theme.borderRadius.lg,
         marginTop: theme.spacing.xs,
@@ -391,13 +393,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: theme.spacing.md,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: theme.colors.cardBorder,
+        borderBottomColor: theme.colors.borderSubtle,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
     dropdownItemSelected: {
-        backgroundColor: theme.colors.cardBackground,
+        backgroundColor: theme.colors.surfaceElevated,
     },
     dropdownItemText: {
         color: theme.colors.textSecondary,
@@ -405,7 +407,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     dropdownItemTextSelected: {
-        color: theme.colors.primary,
+        color: theme.colors.primaryVibrant,
         fontWeight: 'bold',
     },
     modalFooter: {
@@ -416,7 +418,7 @@ const styles = StyleSheet.create({
         marginTop: theme.spacing.md,
         paddingTop: 14,
         borderTopWidth: 1,
-        borderTopColor: theme.colors.cardBorder,
+        borderTopColor: theme.colors.borderSubtle,
     },
     buttonCancel: {
         paddingVertical: 10,
@@ -426,10 +428,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: theme.spacing.lg,
         borderRadius: theme.borderRadius.lg,
-        backgroundColor: theme.colors.cardBorder,
+        backgroundColor: theme.colors.surfaceElevated,
+        borderWidth: 1,
+        borderColor: theme.colors.borderSubtle,
     },
     buttonCancelText: {
-        color: theme.colors.text,
+        color: theme.colors.textSecondary,
         fontSize: theme.fontSize.md,
         fontWeight: '600',
     },
