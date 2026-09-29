@@ -15,7 +15,7 @@ export function TelaListaPontos({navigation}: any) {
     const pontosFiltrados = useMemo(() => {
         return pontosMock.filter(ponto => ponto.nome.toLowerCase().includes(busca.toLowerCase()))
     }, [busca])
-    
+
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleText}>Pontos de Coleta</Text>

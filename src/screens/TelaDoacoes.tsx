@@ -12,6 +12,7 @@ import {SafeAreaView} from "react-native-safe-area-context";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import {theme} from "../theme/theme";
 import {Doacao} from "../types/doacao";
+import {CardDoacao} from "../components/CardDoacao";
 
 type TelaDoacoesProps = {
     doacoes: Doacao[];
@@ -33,7 +34,7 @@ export function TelaDoacoes({doacoes, onNovaDoacao}: TelaDoacoesProps) {
             <FlatList
                 data={doacoes}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={({item}) => null}
+                renderItem={({item}) => CardDoacao({doacao: item})}
                 contentContainerStyle={[
                     styles.listContent,
                     doacoes.length === 0 && styles.emptyListContent,

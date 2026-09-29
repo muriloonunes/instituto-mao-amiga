@@ -216,7 +216,11 @@ export function BottomBar() {
                         tabBarLabel: "Doações",
                     }}
                 >
-                    {() => <TelaDoacoes doacoes={doacoes}/>}
+                    {() => <TelaDoacoes
+                        doacoes={doacoes}
+                        onNovaDoacao={() => setModalVisible(true)}
+                    />
+                    }
                 </Tab.Screen>
             </Tab.Navigator>
 
@@ -224,8 +228,8 @@ export function BottomBar() {
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
                 onSave={async (doacao: Doacao) => {
-                   const atualizadas = await salvarDoacao(doacao);
-                   if (atualizadas) setDoacoes(atualizadas);
+                    const atualizadas = await salvarDoacao(doacao);
+                    if (atualizadas) setDoacoes(atualizadas);
                 }}
             />
         </View>
