@@ -48,7 +48,7 @@ export function BottomBar() {
                         }
                         : {
                             position: "absolute",
-                            bottom: 16,
+                            bottom: 18,
                             left: 20,
                             right: 20,
                             height: 68,
@@ -59,6 +59,7 @@ export function BottomBar() {
                             elevation: 8,
                             paddingTop: 8,
                             paddingBottom: 8,
+                            marginHorizontal: 8,
                             overflow: "hidden",
                         },
 
