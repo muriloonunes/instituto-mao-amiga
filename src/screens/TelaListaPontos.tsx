@@ -1,13 +1,9 @@
 import React, {useMemo, useState} from 'react';
-import {FlatList, Pressable, StyleSheet, Text, TextInput, useWindowDimensions} from 'react-native';
-import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
+import {FlatList, StyleSheet, Text, TextInput, useWindowDimensions} from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {pontosMock} from "../mocks/pontosMock";
 import {PontoItem} from "../components/PontoItem";
 import {theme} from "../theme/theme";
-import {NovaDoacaoModal} from "../components/NovaDoacaoModal";
-import {Doacao} from "../types/doacao";
-import {salvarDoacao} from "../services/doacoesStorage";
 
 export function TelaListaPontos({navigation}: any) {
     const {width} = useWindowDimensions();
@@ -19,9 +15,7 @@ export function TelaListaPontos({navigation}: any) {
     const pontosFiltrados = useMemo(() => {
         return pontosMock.filter(ponto => ponto.nome.toLowerCase().includes(busca.toLowerCase()))
     }, [busca])
-
-    const [modalVisible, setModalVisible] = useState(false);
-
+    
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleText}>Pontos de Coleta</Text>
@@ -33,14 +27,6 @@ export function TelaListaPontos({navigation}: any) {
                 onChangeText={setBusca}
                 autoCorrect={false}
             />
-            <NovaDoacaoModal
-                visible={modalVisible}
-                onClose={() => setModalVisible(false)}
-                onSave={(doacao: Doacao) => {
-                    salvarDoacao(doacao)
-                }}
-            />
-            <FAB onPress={() => setModalVisible(true)}/>
             <FlatList
                 data={pontosFiltrados}
                 keyExtractor={(item) => item.id.toString()}
@@ -56,17 +42,6 @@ export function TelaListaPontos({navigation}: any) {
                 ]}
             />
         </SafeAreaView>
-    );
-}
-
-export function FAB({onPress}: { onPress: () => void }) {
-    return (
-        <Pressable
-            style={styles.floatingButton}
-            onPress={onPress}
-        >
-            <MaterialDesignIcons name='plus' color='white' size={32}/>
-        </Pressable>
     );
 }
 

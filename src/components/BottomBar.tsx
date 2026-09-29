@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import {TelaListaPontos} from "../screens/TelaListaPontos";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
@@ -7,7 +7,7 @@ import {Platform, StyleSheet, useWindowDimensions, View, ViewStyle} from "react-
 import {theme} from "../theme/theme";
 import {BlurView} from "expo-blur";
 import {NovaDoacaoModal} from "./NovaDoacaoModal";
-import {salvarDoacao} from "../services/doacoesStorage";
+import {listarDoacoes, salvarDoacao} from "../services/doacoesStorage";
 import {Doacao} from "../types/doacao";
 import {BottomBarFab} from "./BottomBarFab";
 
@@ -79,6 +79,14 @@ export function BottomBar() {
     const [modalVisible, setModalVisible] = useState(false);
 
     const telaLarga = dimensions.width >= 768;
+
+    const [doacoes, setDoacoes] = useState<Doacao[]>([]);
+
+    useEffect(() => {
+        listarDoacoes().then((doacoes) => {
+            if (doacoes) setDoacoes(doacoes);
+        })
+    }, [])
 
     return (
         <View style={styles.rootContainer}>
@@ -204,18 +212,20 @@ export function BottomBar() {
                 )}
                 <Tab.Screen
                     name={"Doações"}
-                    component={TelaDoacoes}
                     options={{
                         tabBarLabel: "Doações",
                     }}
-                />
+                >
+                    {() => <TelaDoacoes doacoes={doacoes}/>}
+                </Tab.Screen>
             </Tab.Navigator>
 
             <NovaDoacaoModal
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
                 onSave={async (doacao: Doacao) => {
-                    await salvarDoacao(doacao);
+                   const atualizadas = await salvarDoacao(doacao);
+                   if (atualizadas) setDoacoes(atualizadas);
                 }}
             />
         </View>

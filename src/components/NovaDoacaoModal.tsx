@@ -240,22 +240,26 @@ export function NovaDoacaoModal(
                         </View>
                     </ScrollView>
                     <View style={styles.modalFooter}>
-                        <TouchableOpacity
-                            style={styles.buttonCancel}
+                        <Pressable
+                            style={({ pressed }) => [
+                                styles.buttonCancel,
+                                { opacity: pressed ? 0.7 : 1 }
+                            ]}
                             onPress={fechar}
-                            activeOpacity={0.7}
                         >
                             <Text style={styles.buttonCancelText}>Cancelar</Text>
-                        </TouchableOpacity>
+                        </Pressable>
 
-                        <TouchableOpacity
-                            style={styles.buttonSave}
+                        <Pressable
+                            style={({ pressed }) => [
+                                styles.buttonSave,
+                                { opacity: pressed ? 0.8 : 1 }
+                            ]}
                             onPress={salvar}
-                            activeOpacity={0.8}
                         >
                             <MaterialDesignIcons name="check" size={18} color={theme.colors.textWhite}/>
                             <Text style={styles.buttonSaveText}>Salvar</Text>
-                        </TouchableOpacity>
+                        </Pressable>
                     </View>
                 </View>
             </KeyboardAvoidingView>
