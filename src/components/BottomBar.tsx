@@ -83,6 +83,7 @@ export function BottomBar() {
     return (
         <View style={styles.rootContainer}>
             <Tab.Navigator
+                initialRouteName="Pontos"
                 screenOptions={({route}) => ({
                     headerShown: false,
                     tabBarPosition: dimensions.width >= 768 ? 'left' : 'bottom',
