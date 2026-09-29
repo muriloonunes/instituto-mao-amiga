@@ -1,5 +1,5 @@
 import React, {useMemo, useState} from 'react';
-import {FlatList, Pressable, StyleSheet, Text, TextInput} from 'react-native';
+import {FlatList, Pressable, StyleSheet, Text, TextInput, useWindowDimensions} from 'react-native';
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {pontosMock} from "../mocks/pontosMock";
@@ -10,6 +10,11 @@ import {Doacao} from "../types/doacao";
 import {salvarDoacao} from "../services/doacoesStorage";
 
 export function TelaListaPontos({navigation}: any) {
+    const {width} = useWindowDimensions();
+    const telaLarga = width >= 768;
+
+    const paddingInferior = telaLarga ? theme.spacing['3xl'] : 65;
+
     const [busca, setBusca] = useState('')
     const pontosFiltrados = useMemo(() => {
         return pontosMock.filter(ponto => ponto.nome.toLowerCase().includes(busca.toLowerCase()))
@@ -45,7 +50,10 @@ export function TelaListaPontos({navigation}: any) {
                         onPress={() => navigation.navigate('TelaDetalhePonto', {pontoId: item.id})}
                     />
                 )}
-                contentContainerStyle={styles.listaContainer}
+                contentContainerStyle={[
+                    styles.listaContainer,
+                    {paddingBottom: paddingInferior}
+                ]}
             />
         </SafeAreaView>
     );
@@ -89,7 +97,6 @@ const styles = StyleSheet.create({
     },
     listaContainer: {
         padding: theme.spacing['2xl'],
-        paddingBottom: theme.spacing['3xl'],
     },
     floatingButton: {
         backgroundColor: theme.colors.primary,

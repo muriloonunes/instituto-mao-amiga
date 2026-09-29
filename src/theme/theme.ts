@@ -5,6 +5,7 @@ export const theme = {
     cardBackground: '#202024',
     cardBorder: '#29292e',
     primary: '#00b37e',
+    primaryLight: 'rgba(0, 179, 126, 0.20)',
     text: '#f1f1f1',
     textSecondary: '#c4c4cc',
     textMuted: '#8d8d99',
