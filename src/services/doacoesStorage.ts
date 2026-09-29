@@ -29,6 +29,26 @@ export const salvarDoacao = async (novaDoacao: Doacao): Promise<Doacao[]> => {
     }
 }
 
+export const atualizarDoacao = async (doacaoAtualizada: Doacao): Promise<Doacao[]> => {
+    if (!doacaoAtualizada) return [];
+
+    try {
+        const doacoesAtuais = await listarDoacoes();
+        const doacoesAtualizadas = doacoesAtuais.map(doacao => {
+            if (doacao.id === doacaoAtualizada.id) {
+                return doacaoAtualizada;
+            }
+            return doacao;
+        });
+
+        await AsyncStorage.setItem(CHAVE_DOACOES, JSON.stringify(doacoesAtualizadas));
+        return doacoesAtualizadas;
+    } catch (error) {
+        console.error('Erro ao atualizar doação:', error);
+        return [];
+    }
+}
+
 export const excluirDoacao = async (id: number): Promise<Doacao[]> => {
     try {
         const doacoesAtuais = await listarDoacoes();

@@ -1,5 +1,6 @@
-import React from "react";
+import React, {useCallback, useState} from "react";
 import {
+    ActivityIndicator,
     FlatList,
     Platform,
     Pressable,
@@ -13,19 +14,42 @@ import MaterialDesignIcons from "@react-native-vector-icons/material-design-icon
 import {theme} from "../theme/theme";
 import {Doacao} from "../types/doacao";
 import {CardDoacao} from "../components/CardDoacao";
-import {useNavigation} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
+import {listarDoacoes} from "../services/doacoesStorage";
 
 type TelaDoacoesProps = {
-    doacoes: Doacao[];
     onNovaDoacao?: () => void;
 };
 
-export function TelaDoacoes({doacoes, onNovaDoacao}: TelaDoacoesProps) {
+export function TelaDoacoes({onNovaDoacao}: TelaDoacoesProps) {
     const navigation = useNavigation<any>();
     const {width} = useWindowDimensions();
     const telaLarga = width >= 768;
 
     const paddingInferior = telaLarga ? theme.spacing['3xl'] : 65;
+
+    const [doacoes, setDoacoes] = useState<Doacao[]>([]);
+    const [carregando, setCarregando] = useState(true);
+
+    useFocusEffect(
+        useCallback(() => {
+            let ativo = true
+
+            async function carregar() {
+                const doacoes = await listarDoacoes();
+                if (ativo && doacoes) {
+                    setDoacoes(doacoes);
+                    setCarregando(false);
+                }
+            }
+
+            carregar()
+
+            return () => {
+                ativo = false
+            }
+        }, [])
+    )
 
     return (
         <SafeAreaView style={styles.container}>
@@ -33,55 +57,58 @@ export function TelaDoacoes({doacoes, onNovaDoacao}: TelaDoacoesProps) {
                 Doações
             </Text>
 
-            <FlatList
-                data={doacoes}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({item}) => CardDoacao({
-                    doacao: item,
-                    onPress: () => navigation.navigate('TelaDetalheDoacao', {doacao: item})
-                })}
-                contentContainerStyle={[
-                    styles.listContent,
-                    doacoes.length === 0 && styles.emptyListContent,
-                    {paddingBottom: paddingInferior},
-                ]}
-                ListEmptyComponent={() => (
-                    <View style={styles.emptyCard}>
-                        <View style={styles.iconContainer}>
-                            <MaterialDesignIcons
-                                name="hand-heart-outline"
-                                size={40}
-                                color={theme.colors.primaryVibrant}
-                            />
+            {carregando ? (
+                <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
+            ) : (
+                <FlatList
+                    data={doacoes}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({item}) => CardDoacao({
+                        doacao: item,
+                        onPress: () => navigation.navigate('TelaDetalheDoacao', {doacao: item})
+                    })}
+                    contentContainerStyle={[
+                        styles.listContent,
+                        doacoes.length === 0 && styles.emptyListContent,
+                        {paddingBottom: paddingInferior},
+                    ]}
+                    ListEmptyComponent={() => (
+                        <View style={styles.emptyCard}>
+                            <View style={styles.iconContainer}>
+                                <MaterialDesignIcons
+                                    name="hand-heart-outline"
+                                    size={40}
+                                    color={theme.colors.primaryVibrant}
+                                />
+                            </View>
+
+                            <Text style={styles.emptyTitle}>
+                                Nenhuma doação registrada ainda
+                            </Text>
+
+                            <Text style={styles.emptySubtitle}>
+                                Que tal começar a fazer o bem? Registre a primeira doação!
+                            </Text>
+
+                            <Pressable
+                                style={({pressed}) => [
+                                    styles.buttonCriar,
+                                    pressed && styles.buttonCriarPressed,
+                                ]}
+                                onPress={onNovaDoacao}
+                                accessibilityRole="button"
+                                accessibilityLabel="Registrar Nova Doação"
+                            >
+                                <MaterialDesignIcons
+                                    name="plus"
+                                    size={22}
+                                    color={theme.colors.textWhite}
+                                />
+                                <Text style={styles.buttonCriarText}>Registrar doação</Text>
+                            </Pressable>
                         </View>
-
-                        <Text style={styles.emptyTitle}>
-                            Nenhuma doação registrada ainda
-                        </Text>
-
-                        <Text style={styles.emptySubtitle}>
-                            Que tal começar a fazer o bem? Registre a primeira doação!
-                        </Text>
-
-                        <Pressable
-                            style={({pressed}) => [
-                                styles.buttonCriar,
-                                pressed && styles.buttonCriarPressed,
-                            ]}
-                            onPress={onNovaDoacao}
-                            accessibilityRole="button"
-                            accessibilityLabel="Registrar Nova Doação"
-                        >
-                            <MaterialDesignIcons
-                                name="plus"
-                                size={22}
-                                color={theme.colors.textWhite}
-                            />
-                            <Text style={styles.buttonCriarText}>Registrar doação</Text>
-                        </Pressable>
-                    </View>
-                )}
-            />
+                    )}
+                />)}
         </SafeAreaView>
     );
 }

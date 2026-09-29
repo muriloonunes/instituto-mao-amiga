@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import {TelaListaPontos} from "../screens/TelaListaPontos";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
@@ -7,7 +7,7 @@ import {Platform, StyleSheet, useWindowDimensions, View, ViewStyle} from "react-
 import {theme} from "../theme/theme";
 import {BlurView} from "expo-blur";
 import {NovaDoacaoModal} from "./NovaDoacaoModal";
-import {listarDoacoes, salvarDoacao} from "../services/doacoesStorage";
+import {salvarDoacao} from "../services/doacoesStorage";
 import {Doacao} from "../types/doacao";
 import {BottomBarFab} from "./BottomBarFab";
 
@@ -79,14 +79,6 @@ export function BottomBar() {
     const [modalVisible, setModalVisible] = useState(false);
 
     const telaLarga = dimensions.width >= 768;
-
-    const [doacoes, setDoacoes] = useState<Doacao[]>([]);
-
-    useEffect(() => {
-        listarDoacoes().then((doacoes) => {
-            if (doacoes) setDoacoes(doacoes);
-        })
-    }, [])
 
     return (
         <View style={styles.rootContainer}>
@@ -217,7 +209,6 @@ export function BottomBar() {
                     }}
                 >
                     {() => <TelaDoacoes
-                        doacoes={doacoes}
                         onNovaDoacao={() => setModalVisible(true)}
                     />
                     }
@@ -228,8 +219,7 @@ export function BottomBar() {
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
                 onSave={async (doacao: Doacao) => {
-                    const atualizadas = await salvarDoacao(doacao);
-                    if (atualizadas) setDoacoes(atualizadas);
+                    await salvarDoacao(doacao);
                 }}
             />
         </View>

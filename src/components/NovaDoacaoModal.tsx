@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import {theme} from "../theme/theme";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {pontosMock} from "../mocks/pontosMock";
 import {Doacao} from "../types/doacao";
 
@@ -21,6 +21,7 @@ type NovoPontoModalProps = {
     visible: boolean;
     onClose: () => void;
     onSave: (doacao: Doacao) => void;
+    doacaoExistente?: Doacao;
 };
 
 type ErrosForm = {
@@ -30,13 +31,25 @@ type ErrosForm = {
 }
 
 export function NovaDoacaoModal(
-    {visible, onClose, onSave}: NovoPontoModalProps
+    {visible, onClose, onSave, doacaoExistente}: NovoPontoModalProps
 ) {
     const [nomeItem, setNomeItem] = useState('')
     const [qtdItem, setQtdItem] = useState('')
     const [pontoSelecionado, setPontoSelecionado] = useState<Ponto | null>(null)
     const [dropdownAberto, setDropdownAberto] = useState(false);
     const [erros, setErros] = useState<ErrosForm>({});
+
+    useEffect(() => {
+        if (visible && doacaoExistente) {
+            setNomeItem(doacaoExistente.nome);
+            setQtdItem(doacaoExistente.quantidade.toString());
+            const ponto = pontosMock.find(p => p.id === doacaoExistente.pontoId) || null;
+            setPontoSelecionado(ponto);
+            setErros({});
+        } else if (visible && !doacaoExistente) {
+            limparFormulario();
+        }
+    }, [visible, doacaoExistente]);
 
     function limparFormulario() {
         setNomeItem('')
@@ -75,11 +88,11 @@ export function NovaDoacaoModal(
     function salvar() {
         if (!validar()) return
         onSave({
-            id: Date.now(),
+            id: doacaoExistente ? doacaoExistente.id : Date.now(),
             nome: nomeItem.trim(),
             quantidade: Number(qtdItem),
             pontoId: pontoSelecionado!.id,
-            criadoEm: new Date().toISOString(),
+            criadoEm: doacaoExistente ? doacaoExistente.criadoEm : new Date().toISOString(),
         })
         fechar()
     }
@@ -104,12 +117,16 @@ export function NovaDoacaoModal(
                         <View style={styles.modalHeaderTitleGroup}>
                             <View style={styles.modalHeaderIconContainer}>
                                 <MaterialDesignIcons
-                                    name="package-variant-closed-plus"
+                                    name={doacaoExistente ? "pencil" : "package-variant-closed-plus"}
                                     size={20}
                                     color={theme.colors.primaryVibrant}
                                 />
                             </View>
-                            <Text style={styles.modalTitle}>Registrar Nova Doação</Text>
+                            {doacaoExistente ? (
+                                <Text style={styles.modalTitle}>Editar Doação</Text>
+                            ) : (
+                                <Text style={styles.modalTitle}>Registrar Nova Doação</Text>
+                            )}
                         </View>
                         <TouchableOpacity
                             onPress={fechar}
@@ -241,9 +258,9 @@ export function NovaDoacaoModal(
                     </ScrollView>
                     <View style={styles.modalFooter}>
                         <Pressable
-                            style={({ pressed }) => [
+                            style={({pressed}) => [
                                 styles.buttonCancel,
-                                { opacity: pressed ? 0.7 : 1 }
+                                {opacity: pressed ? 0.7 : 1}
                             ]}
                             onPress={fechar}
                         >
@@ -251,9 +268,9 @@ export function NovaDoacaoModal(
                         </Pressable>
 
                         <Pressable
-                            style={({ pressed }) => [
+                            style={({pressed}) => [
                                 styles.buttonSave,
-                                { opacity: pressed ? 0.8 : 1 }
+                                {opacity: pressed ? 0.8 : 1}
                             ]}
                             onPress={salvar}
                         >

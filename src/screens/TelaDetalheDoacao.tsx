@@ -1,29 +1,44 @@
-import React, {useLayoutEffect, useState} from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
+import {ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View,} from 'react-native';
 import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import {theme} from '../theme/theme';
 import {Doacao} from '../types/doacao';
 import {pontosMock} from '../mocks/pontosMock';
-import {excluirDoacao} from '../services/doacoesStorage';
+import {atualizarDoacao, excluirDoacao} from '../services/doacoesStorage';
+import {NovaDoacaoModal} from "../components/NovaDoacaoModal";
 
 export function TelaDetalheDoacao({navigation, route}: any) {
-    const [carregando, setCarregando] = useState(false);
-    const doacao: Doacao | undefined = route?.params?.doacao;
+    const [carregandoExclusao, setCarregandoExclusao] = useState(false);
+    const [editarModalVisible, setEditarModalVisible] = useState(false);
+    const [carregandoEdicao, setCarregandoEdicao] = useState(false);
+    const [doacao, setDoacao] = useState<Doacao | undefined>(route?.params?.doacao);
+
+    useEffect(() => {
+        if (route?.params?.doacao) {
+            setDoacao(route.params.doacao);
+        }
+    }, [route?.params?.doacao]);
+
+    async function onConfirmEditar(novaDoacao: Doacao) {
+        if (!novaDoacao) return;
+
+        try {
+            setCarregandoEdicao(true);
+            await atualizarDoacao(novaDoacao);
+            setDoacao(novaDoacao);
+            navigation.setParams({doacao: novaDoacao});
+        } catch (error) {
+            Alert.alert('Erro', 'Não foi possível editar a doação.');
+        } finally {
+            setCarregandoEdicao(false);
+        }
+    }
 
     async function onConfirmExcluir() {
         if (!doacao) return;
 
         try {
-            setCarregando(true);
+            setCarregandoExclusao(true);
             await excluirDoacao(doacao.id);
             try {
                 navigation.reset({
@@ -39,7 +54,7 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                 navigation.goBack();
             }
         } catch (error) {
-            setCarregando(false);
+            setCarregandoExclusao(false);
             Alert.alert('Erro', 'Ocorreu um erro ao excluir a doação.');
         }
     }
@@ -68,35 +83,65 @@ export function TelaDetalheDoacao({navigation, route}: any) {
 
         navigation.setOptions({
             headerRight: () => (
-                <Pressable
-                    style={({pressed}) => [
-                        styles.headerBotaoExcluir,
-                        pressed && styles.headerBotaoExcluirPressionado,
-                    ]}
-                    onPress={onExcluirClick}
-                    disabled={carregando}
-                    hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
-                    android_ripple={{
-                        color: 'rgba(247, 90, 104, 0.25)',
-                        borderless: true,
-                        radius: 20,
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel="Excluir Doação"
-                >
-                    {carregando ? (
-                        <ActivityIndicator size="small" color={theme.colors.danger}/>
-                    ) : (
-                        <MaterialDesignIcons
-                            name="trash-can-outline"
-                            size={22}
-                            color={theme.colors.danger}
-                        />
-                    )}
-                </Pressable>
+                <View style={styles.headerAcoes}>
+                    <Pressable
+                        style={({pressed}) => [
+                            styles.headerBotaoAcao,
+                            pressed && styles.headerBotaoAcaoPressionado,
+                            carregandoEdicao && styles.headerBotaoDesabilitado,
+                        ]}
+                        onPress={() => setEditarModalVisible(true)}
+                        disabled={carregandoEdicao || carregandoExclusao}
+                        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                        android_ripple={{
+                            color: theme.colors.primaryLight,
+                            borderless: true,
+                            radius: 20,
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Editar Doação"
+                    >
+                        {carregandoEdicao ? (
+                            <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
+                        ) : (
+                            <MaterialDesignIcons
+                                name="pencil-outline"
+                                size={22}
+                                color={theme.colors.primaryVibrant}
+                            />
+                        )}
+                    </Pressable>
+                    <Pressable
+                        style={({pressed}) => [
+                            styles.headerBotaoAcao,
+                            pressed && styles.headerBotaoAcaoPressionado,
+                            carregandoExclusao && styles.headerBotaoDesabilitado,
+                        ]}
+                        onPress={onExcluirClick}
+                        disabled={carregandoExclusao || carregandoEdicao}
+                        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                        android_ripple={{
+                            color: 'rgba(247, 90, 104, 0.25)',
+                            borderless: true,
+                            radius: 20,
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Excluir Doação"
+                    >
+                        {carregandoExclusao ? (
+                            <ActivityIndicator size="small" color={theme.colors.danger}/>
+                        ) : (
+                            <MaterialDesignIcons
+                                name="trash-can-outline"
+                                size={22}
+                                color={theme.colors.danger}
+                            />
+                        )}
+                    </Pressable>
+                </View>
             ),
         });
-    }, [navigation, doacao, carregando]);
+    }, [navigation, doacao, carregandoExclusao, carregandoEdicao]);
 
     if (!doacao) {
         return (
@@ -129,6 +174,14 @@ export function TelaDetalheDoacao({navigation, route}: any) {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
         >
+            <NovaDoacaoModal
+                visible={editarModalVisible}
+                onClose={() => setEditarModalVisible(false)}
+                doacaoExistente={doacao}
+                onSave={async (novaDoacao) => {
+                    await onConfirmEditar(novaDoacao);
+                }}
+            />
             <View style={styles.conteudoCentral}>
                 <View style={styles.heroCard}>
                     <View style={styles.heroIconWrapper}>
@@ -232,17 +285,43 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                 <View style={styles.secaoBotao}>
                     <Pressable
                         style={({pressed}) => [
+                            styles.botaoEditar,
+                            pressed && styles.botaoEditarPressionado,
+                            (carregandoEdicao || carregandoExclusao) && styles.botaoDesabilitado,
+                        ]}
+                        onPress={() => setEditarModalVisible(true)}
+                        disabled={carregandoEdicao || carregandoExclusao}
+                        android_ripple={{color: theme.colors.primaryLight}}
+                        accessibilityRole="button"
+                        accessibilityLabel="Editar Doação"
+                    >
+                        {carregandoEdicao ? (
+                            <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
+                        ) : (
+                            <>
+                                <MaterialDesignIcons
+                                    name="pencil-outline"
+                                    size={20}
+                                    color={theme.colors.primaryVibrant}
+                                />
+                                <Text style={styles.botaoEditarTexto}>Editar Doação</Text>
+                            </>
+                        )}
+                    </Pressable>
+
+                    <Pressable
+                        style={({pressed}) => [
                             styles.botaoExcluir,
                             pressed && styles.botaoExcluirPressionado,
-                            carregando && styles.botaoDesabilitado,
+                            (carregandoExclusao || carregandoEdicao) && styles.botaoDesabilitado,
                         ]}
                         onPress={onExcluirClick}
-                        disabled={carregando}
+                        disabled={carregandoExclusao || carregandoEdicao}
                         android_ripple={{color: 'rgba(247, 90, 104, 0.2)'}}
                         accessibilityRole="button"
                         accessibilityLabel="Excluir Doação"
                     >
-                        {carregando ? (
+                        {carregandoExclusao ? (
                             <ActivityIndicator size="small" color={theme.colors.danger}/>
                         ) : (
                             <>
@@ -299,20 +378,24 @@ const styles = StyleSheet.create({
         maxWidth: 600,
         alignSelf: 'center',
     },
-
-    // Header Right
-    headerBotaoExcluir: {
-        padding: theme.spacing.sm,
+    headerAcoes: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: theme.spacing.xs,
         marginRight: Platform.OS === 'ios' ? -4 : 4,
+    },
+    headerBotaoAcao: {
+        padding: theme.spacing.sm,
         borderRadius: theme.borderRadius.full,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    headerBotaoExcluirPressionado: {
+    headerBotaoAcaoPressionado: {
         opacity: 0.6,
     },
-
-    // Hero
+    headerBotaoDesabilitado: {
+        opacity: 0.4,
+    },
     heroCard: {
         backgroundColor: theme.colors.cardBackground,
         borderRadius: theme.borderRadius.xl,
@@ -381,8 +464,6 @@ const styles = StyleSheet.create({
         fontSize: theme.fontSize.xs,
         fontWeight: '600',
     },
-
-    // Seções
     secao: {
         marginBottom: theme.spacing['2xl'],
     },
@@ -467,11 +548,31 @@ const styles = StyleSheet.create({
         color: theme.colors.textSecondary,
         lineHeight: 20,
     },
-
-    // Botão Excluir
     secaoBotao: {
         marginTop: theme.spacing.md,
         marginBottom: theme.spacing['2xl'],
+        gap: theme.spacing.md, // Espaçamento consistente entre Editar e Excluir
+    },
+    botaoEditar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        minHeight: 50,
+        backgroundColor: theme.colors.surfaceElevated,
+        borderWidth: 1,
+        borderColor: theme.colors.borderMedium,
+        borderRadius: theme.borderRadius.xl,
+        paddingHorizontal: theme.spacing['2xl'],
+    },
+    botaoEditarPressionado: {
+        opacity: Platform.OS === 'ios' ? 0.75 : 1,
+        backgroundColor: theme.colors.surfaceHover,
+    },
+    botaoEditarTexto: {
+        fontSize: theme.fontSize.lg,
+        fontWeight: 'bold',
+        color: theme.colors.primaryVibrant,
     },
     botaoExcluir: {
         flexDirection: 'row',
@@ -497,8 +598,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: theme.colors.danger,
     },
-
-    // Erro / Vazio
     containerVazio: {
         flex: 1,
         backgroundColor: theme.colors.background,
