@@ -28,3 +28,21 @@ export const salvarDoacao = async (novaDoacao: Doacao): Promise<Doacao[]> => {
         return [];
     }
 }
+
+export const excluirDoacao = async (id: number): Promise<Doacao[]> => {
+    try {
+        const doacoesAtuais = await listarDoacoes();
+        const doacoesAtualizadas = doacoesAtuais.filter(doacao => doacao.id !== id);
+
+        if (doacoesAtuais.length === doacoesAtualizadas.length) {
+            console.warn(`Doação com ID ${id} não encontrada para exclusão.`);
+            return doacoesAtuais;
+        }
+
+        await AsyncStorage.setItem(CHAVE_DOACOES, JSON.stringify(doacoesAtualizadas));
+        return doacoesAtualizadas;
+    } catch (error) {
+        console.error('Erro ao deletar doação:', error);
+        throw error;
+    }
+}
