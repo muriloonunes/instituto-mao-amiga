@@ -76,6 +76,7 @@ function getTabBarStyle(telaLarga: boolean): ViewStyle {
 
 export function BottomBar() {
     const dimensions = useWindowDimensions();
+    const [atualizacaoKey, setAtualizacaoKey] = useState(0);
     const [modalVisible, setModalVisible] = useState(false);
 
     const telaLarga = dimensions.width >= 768;
@@ -210,6 +211,7 @@ export function BottomBar() {
                 >
                     {() => <TelaDoacoes
                         onNovaDoacao={() => setModalVisible(true)}
+                        atualizacaoKey={atualizacaoKey}
                     />
                     }
                 </Tab.Screen>
@@ -220,6 +222,7 @@ export function BottomBar() {
                 onClose={() => setModalVisible(false)}
                 onSave={async (doacao: Doacao) => {
                     await salvarDoacao(doacao);
+                    setAtualizacaoKey(prev => prev + 1);
                 }}
             />
         </View>

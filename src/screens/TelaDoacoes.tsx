@@ -22,6 +22,7 @@ import {InputPesquisar} from "../components/InputPesquisar";
 
 type TelaDoacoesProps = {
     onNovaDoacao?: () => void;
+    atualizacaoKey?: number;
 };
 
 type ResumoDoacoes = {
@@ -30,7 +31,7 @@ type ResumoDoacoes = {
     quantidadeDoacoes: number;
 };
 
-export function TelaDoacoes({onNovaDoacao}: TelaDoacoesProps) {
+export function TelaDoacoes({onNovaDoacao, atualizacaoKey}: TelaDoacoesProps) {
     const navigation = useNavigation<any>();
     const {width} = useWindowDimensions();
     const telaLarga = width >= 768;
@@ -95,7 +96,7 @@ export function TelaDoacoes({onNovaDoacao}: TelaDoacoesProps) {
             return () => {
                 ativo = false;
             };
-        }, [])
+        }, [atualizacaoKey])
     );
 
     return (
