@@ -33,7 +33,7 @@ type ErrosForm = {
 export function NovaDoacaoModal(
     {visible, onClose, onSave, doacaoExistente}: NovoPontoModalProps
 ) {
-    const [nomeItem, setNomeItem] = useState('')
+    const [tipoItem, setTipoItem] = useState('')
     const [qtdItem, setQtdItem] = useState('')
     const [pontoSelecionado, setPontoSelecionado] = useState<Ponto | null>(null)
     const [dropdownAberto, setDropdownAberto] = useState(false);
@@ -41,7 +41,7 @@ export function NovaDoacaoModal(
 
     useEffect(() => {
         if (visible && doacaoExistente) {
-            setNomeItem(doacaoExistente.nome);
+            setTipoItem(doacaoExistente.tipoItem);
             setQtdItem(doacaoExistente.quantidade.toString());
             const ponto = pontosMock.find(p => p.id === doacaoExistente.pontoId) || null;
             setPontoSelecionado(ponto);
@@ -52,7 +52,7 @@ export function NovaDoacaoModal(
     }, [visible, doacaoExistente]);
 
     function limparFormulario() {
-        setNomeItem('')
+        setTipoItem('')
         setQtdItem('')
         setPontoSelecionado(null)
         setDropdownAberto(false)
@@ -66,7 +66,7 @@ export function NovaDoacaoModal(
 
     function validar(): boolean {
         const novosErros: ErrosForm = {}
-        if (!nomeItem.trim()) {
+        if (!tipoItem.trim()) {
             novosErros.nomeItem = 'O nome do item é obrigatório.';
         }
         if (!qtdItem.trim()) {
@@ -89,7 +89,7 @@ export function NovaDoacaoModal(
         if (!validar()) return
         onSave({
             id: doacaoExistente ? doacaoExistente.id : Date.now(),
-            nome: nomeItem.trim(),
+            tipoItem: tipoItem.trim(),
             quantidade: Number(qtdItem),
             pontoId: pontoSelecionado!.id,
             criadoEm: doacaoExistente ? doacaoExistente.criadoEm : new Date().toISOString(),
@@ -143,7 +143,7 @@ export function NovaDoacaoModal(
                         contentContainerStyle={styles.formScrollContainer}
                     >
                         <View style={styles.formGroup}>
-                            <Text style={styles.inputLabel}>Item Doado*</Text>
+                            <Text style={styles.inputLabel}>Tipo de Item Doado*</Text>
                             <TextInput
                                 style={[
                                     styles.modalInput,
@@ -151,10 +151,10 @@ export function NovaDoacaoModal(
                                 ]}
                                 placeholder="Blusa de Frio"
                                 placeholderTextColor={theme.colors.placeholder}
-                                value={nomeItem}
+                                value={tipoItem}
                                 onChangeText={(text) => {
-                                    setNomeItem(text)
-                                    if (erros.nomeItem) setErros((prev) => ({...prev, nomeItem: undefined}));
+                                    setTipoItem(text)
+                                    if (erros.nomeItem) setErros((prev) => ({...prev, tipoItem: undefined}));
                                 }}
                             />
                             {erros.nomeItem ? <Text style={styles.errorText}>{erros.nomeItem}</Text> : null}

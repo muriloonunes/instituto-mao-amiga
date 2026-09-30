@@ -20,8 +20,8 @@ export function CardDoacao({doacao, onPress}: { doacao: Doacao, onPress: () => v
                             color={theme.colors.primaryVibrant}
                         />
                     </View>
-                    <Text style={styles.nomeItem} numberOfLines={1}>
-                        {doacao.nome}
+                    <Text style={styles.tipoItem} numberOfLines={1}>
+                        {doacao.tipoItem}
                     </Text>
                 </View>
                 <View style={styles.badgeQtd}>
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    nomeItem: {
+    tipoItem: {
         fontSize: theme.fontSize['2xl'],
         fontWeight: 'bold',
         color: theme.colors.textWhite,

@@ -36,7 +36,7 @@ export function TelaDoacoes({onNovaDoacao}: TelaDoacoesProps) {
     const [busca, setBusca] = useState('');
     const doacoesFiltradas = useMemo(() => {
         const termo = busca.trim().toLowerCase();
-        return doacoes.filter(doacao => doacao.nome.toLowerCase().includes(termo));
+        return doacoes.filter(doacao => doacao.tipoItem.toLowerCase().includes(termo));
     }, [doacoes, busca]);
 
     useFocusEffect(

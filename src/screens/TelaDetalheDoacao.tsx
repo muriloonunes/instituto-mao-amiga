@@ -192,7 +192,7 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                         />
                     </View>
 
-                    <Text style={styles.heroNome}>{doacao.nome}</Text>
+                    <Text style={styles.heroNome}>{doacao.tipoItem}</Text>
 
                     <View style={styles.heroBadges}>
                         <View style={styles.badgeQtd}>
@@ -217,7 +217,7 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                     <View style={styles.card}>
                         <View style={styles.campoLinha}>
                             <Text style={styles.campoLabel}>Item:</Text>
-                            <Text style={styles.campoValor}>{doacao.nome}</Text>
+                            <Text style={styles.campoValor}>{doacao.tipoItem}</Text>
                         </View>
 
                         <View style={styles.divisor}/>

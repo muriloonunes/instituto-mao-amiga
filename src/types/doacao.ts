@@ -1,6 +1,6 @@
 export type Doacao = {
     id: number;
-    nome: string;
+    tipoItem: string;
     quantidade: number;
     pontoId: number;
     criadoEm: string;
