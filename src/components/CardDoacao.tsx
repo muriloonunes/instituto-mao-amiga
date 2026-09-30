@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: theme.colors.cardBorder,
         padding: theme.spacing['2xl'],
-        marginBottom: theme.spacing.md,
+        marginBottom: theme.spacing['2xl'],
     },
     header: {
         flexDirection: 'row',

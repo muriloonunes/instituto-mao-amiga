@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
         color: theme.colors.textSecondary,
     },
     listContent: {
-        paddingHorizontal: theme.spacing['2xl'],
+        padding: theme.spacing['2xl'],
         flexGrow: 1,
     },
     emptyListContent: {
