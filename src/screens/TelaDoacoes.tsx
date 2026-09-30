@@ -1,7 +1,8 @@
-import React, {useCallback, useState} from "react";
+import React, {useCallback, useMemo, useState} from "react";
 import {
     ActivityIndicator,
     FlatList,
+    KeyboardAvoidingView,
     Platform,
     Pressable,
     StyleSheet,
@@ -16,6 +17,7 @@ import {Doacao} from "../types/doacao";
 import {CardDoacao} from "../components/CardDoacao";
 import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {listarDoacoes} from "../services/doacoesStorage";
+import {InputPesquisar} from "../components/InputPesquisar";
 
 type TelaDoacoesProps = {
     onNovaDoacao?: () => void;
@@ -31,9 +33,15 @@ export function TelaDoacoes({onNovaDoacao}: TelaDoacoesProps) {
     const [doacoes, setDoacoes] = useState<Doacao[]>([]);
     const [carregando, setCarregando] = useState(true);
 
+    const [busca, setBusca] = useState('');
+    const doacoesFiltradas = useMemo(() => {
+        const termo = busca.trim().toLowerCase();
+        return doacoes.filter(doacao => doacao.nome.toLowerCase().includes(termo));
+    }, [doacoes, busca]);
+
     useFocusEffect(
         useCallback(() => {
-            let ativo = true
+            let ativo = true;
 
             async function carregar() {
                 const doacoes = await listarDoacoes();
@@ -43,13 +51,13 @@ export function TelaDoacoes({onNovaDoacao}: TelaDoacoesProps) {
                 }
             }
 
-            carregar()
+            carregar();
 
             return () => {
-                ativo = false
-            }
+                ativo = false;
+            };
         }, [])
-    )
+    );
 
     return (
         <SafeAreaView style={styles.container}>
@@ -60,55 +68,70 @@ export function TelaDoacoes({onNovaDoacao}: TelaDoacoesProps) {
             {carregando ? (
                 <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
             ) : (
-                <FlatList
-                    data={doacoes}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({item}) => CardDoacao({
-                        doacao: item,
-                        onPress: () => navigation.navigate('TelaDetalheDoacao', {doacao: item})
-                    })}
-                    contentContainerStyle={[
-                        styles.listContent,
-                        doacoes.length === 0 && styles.emptyListContent,
-                        {paddingBottom: paddingInferior},
-                    ]}
-                    ListEmptyComponent={() => (
-                        <View style={styles.emptyCard}>
-                            <View style={styles.iconContainer}>
-                                <MaterialDesignIcons
-                                    name="hand-heart-outline"
-                                    size={40}
-                                    color={theme.colors.primaryVibrant}
-                                />
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    style={styles.keyboardContainer}
+                >
+                    <InputPesquisar placeholder="Buscar doações" busca={busca} setBusca={setBusca}/>
+                    <FlatList
+                        data={doacoesFiltradas}
+                        keyExtractor={(item) => item.id.toString()}
+                        keyboardShouldPersistTaps="handled"
+                        keyboardDismissMode="on-drag"
+                        renderItem={({item}) => CardDoacao({
+                            doacao: item,
+                            onPress: () => navigation.navigate('TelaDetalheDoacao', {doacao: item})
+                        })}
+                        contentContainerStyle={[
+                            styles.listContent,
+                            doacoes.length === 0 && styles.emptyListContent,
+                            {paddingBottom: paddingInferior},
+                        ]}
+                        ListEmptyComponent={() => (
+                            <View style={styles.emptyCard}>
+                                <View style={styles.iconContainer}>
+                                    <MaterialDesignIcons
+                                        name={doacoes.length === 0 ? "hand-heart-outline" : "magnify"}
+                                        size={40}
+                                        color={theme.colors.primaryVibrant}
+                                    />
+                                </View>
+
+                                <Text style={styles.emptyTitle}>
+                                    {doacoes.length === 0
+                                        ? "Nenhuma doação registrada ainda"
+                                        : "Nenhuma doação encontrada"}
+                                </Text>
+
+                                <Text style={styles.emptySubtitle}>
+                                    {doacoes.length === 0
+                                        ? "Que tal começar a fazer o bem? Registre a primeira doação!"
+                                        : `Não encontramos resultados para "${busca}".`}
+                                </Text>
+
+                                {doacoes.length === 0 && (
+                                    <Pressable
+                                        style={({pressed}) => [
+                                            styles.buttonCriar,
+                                            pressed && styles.buttonCriarPressed,
+                                        ]}
+                                        onPress={onNovaDoacao}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Registrar Nova Doação"
+                                    >
+                                        <MaterialDesignIcons
+                                            name="plus"
+                                            size={22}
+                                            color={theme.colors.textWhite}
+                                        />
+                                        <Text style={styles.buttonCriarText}>Registrar doação</Text>
+                                    </Pressable>
+                                )}
                             </View>
-
-                            <Text style={styles.emptyTitle}>
-                                Nenhuma doação registrada ainda
-                            </Text>
-
-                            <Text style={styles.emptySubtitle}>
-                                Que tal começar a fazer o bem? Registre a primeira doação!
-                            </Text>
-
-                            <Pressable
-                                style={({pressed}) => [
-                                    styles.buttonCriar,
-                                    pressed && styles.buttonCriarPressed,
-                                ]}
-                                onPress={onNovaDoacao}
-                                accessibilityRole="button"
-                                accessibilityLabel="Registrar Nova Doação"
-                            >
-                                <MaterialDesignIcons
-                                    name="plus"
-                                    size={22}
-                                    color={theme.colors.textWhite}
-                                />
-                                <Text style={styles.buttonCriarText}>Registrar doação</Text>
-                            </Pressable>
-                        </View>
-                    )}
-                />)}
+                        )}
+                    />
+                </KeyboardAvoidingView>
+            )}
         </SafeAreaView>
     );
 }
@@ -124,9 +147,10 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginLeft: theme.spacing['2xl'],
         marginTop: theme.spacing['2xl'],
-        marginBottom: theme.spacing.md,
     },
-
+    keyboardContainer: {
+        flex: 1,
+    },
     listContent: {
         paddingHorizontal: theme.spacing['2xl'],
         flexGrow: 1,

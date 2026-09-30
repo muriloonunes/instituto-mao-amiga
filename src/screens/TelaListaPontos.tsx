@@ -1,9 +1,10 @@
 import React, {useMemo, useState} from 'react';
-import {FlatList, StyleSheet, Text, TextInput, useWindowDimensions} from 'react-native';
+import {FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, useWindowDimensions} from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {pontosMock} from "../mocks/pontosMock";
 import {CardItem} from "../components/CardItem";
 import {theme} from "../theme/theme";
+import {InputPesquisar} from "../components/InputPesquisar";
 
 export function TelaListaPontos({navigation}: any) {
     const {width} = useWindowDimensions();
@@ -11,36 +12,37 @@ export function TelaListaPontos({navigation}: any) {
 
     const paddingInferior = telaLarga ? theme.spacing['3xl'] : 65;
 
-    const [busca, setBusca] = useState('')
+    const [busca, setBusca] = useState('');
     const pontosFiltrados = useMemo(() => {
-        return pontosMock.filter(ponto => ponto.nome.toLowerCase().includes(busca.toLowerCase()))
-    }, [busca])
+        const termo = busca.trim().toLowerCase();
+        return pontosMock.filter(ponto => ponto.nome.toLowerCase().includes(termo));
+    }, [busca]);
 
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleText}>Pontos de Coleta</Text>
-            <TextInput
-                style={styles.inputBusca}
-                placeholder="Buscar pontos..."
-                placeholderTextColor={theme.colors.placeholder}
-                value={busca}
-                onChangeText={setBusca}
-                autoCorrect={false}
-            />
-            <FlatList
-                data={pontosFiltrados}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({item}) => (
-                    <CardItem
-                        ponto={item}
-                        onPress={() => navigation.navigate('TelaDetalhePonto', {pontoId: item.id})}
-                    />
-                )}
-                contentContainerStyle={[
-                    styles.listaContainer,
-                    {paddingBottom: paddingInferior}
-                ]}
-            />
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={styles.keyboardContainer}
+            >
+                <InputPesquisar placeholder="Buscar pontos" busca={busca} setBusca={setBusca}/>
+                <FlatList
+                    data={pontosFiltrados}
+                    keyExtractor={(item) => item.id.toString()}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
+                    renderItem={({item}) => (
+                        <CardItem
+                            ponto={item}
+                            onPress={() => navigation.navigate('TelaDetalhePonto', {pontoId: item.id})}
+                        />
+                    )}
+                    contentContainerStyle={[
+                        styles.listaContainer,
+                        {paddingBottom: paddingInferior}
+                    ]}
+                />
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -57,18 +59,8 @@ const styles = StyleSheet.create({
         marginLeft: theme.spacing['2xl'],
         marginTop: theme.spacing['2xl'],
     },
-    inputBusca: {
-        backgroundColor: theme.colors.cardBackground,
-        color: theme.colors.text,
-        height: 50,
-        borderRadius: theme.borderRadius.sm,
-        paddingHorizontal: theme.spacing['2xl'],
-        fontSize: theme.fontSize.xl,
-        marginHorizontal: theme.spacing['2xl'],
-        marginTop: theme.spacing['2xl'],
-        marginBottom: theme.spacing.md,
-        borderWidth: 1,
-        borderColor: theme.colors.cardBorder,
+    keyboardContainer: {
+        flex: 1,
     },
     listaContainer: {
         padding: theme.spacing['2xl'],
