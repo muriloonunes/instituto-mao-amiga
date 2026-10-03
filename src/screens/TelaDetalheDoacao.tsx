@@ -106,7 +106,7 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                         ) : (
                             <MaterialDesignIcons
                                 name="pencil-outline"
-                                size={22}
+                                size={24}
                                 color={theme.colors.primaryVibrant}
                             />
                         )}
@@ -133,7 +133,7 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                         ) : (
                             <MaterialDesignIcons
                                 name="trash-can-outline"
-                                size={22}
+                                size={24}
                                 color={theme.colors.danger}
                             />
                         )}
@@ -616,6 +616,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: theme.spacing['2xl'],
         paddingVertical: theme.spacing.md,
         borderRadius: theme.borderRadius.lg,
+        minHeight: 44,
+        justifyContent: 'center'
     },
     botaoVoltarTexto: {
         color: theme.colors.text,

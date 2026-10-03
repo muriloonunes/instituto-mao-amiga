@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: theme.spacing.sm,
+        minHeight: 44,
     },
     resumoTituloContainer: {
         flexDirection: 'row',
