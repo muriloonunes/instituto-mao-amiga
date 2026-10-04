@@ -16,6 +16,7 @@ import MaterialDesignIcons from "@react-native-vector-icons/material-design-icon
 import React, {useEffect, useState} from "react";
 import {pontosMock} from "../mocks/pontosMock";
 import {Doacao} from "../types/doacao";
+import {Picker} from "@react-native-picker/picker";
 
 type NovoPontoModalProps = {
     visible: boolean;
@@ -25,18 +26,17 @@ type NovoPontoModalProps = {
 };
 
 type ErrosForm = {
-    nomeItem?: string,
-    qtdItem?: string,
-    ponto?: string,
-}
+    nomeItem?: string;
+    qtdItem?: string;
+    ponto?: string;
+};
 
 export function NovaDoacaoModal(
     {visible, onClose, onSave, doacaoExistente}: NovoPontoModalProps
 ) {
-    const [tipoItem, setTipoItem] = useState('')
-    const [qtdItem, setQtdItem] = useState('')
-    const [pontoSelecionado, setPontoSelecionado] = useState<Ponto | null>(null)
-    const [dropdownAberto, setDropdownAberto] = useState(false);
+    const [tipoItem, setTipoItem] = useState('');
+    const [qtdItem, setQtdItem] = useState('');
+    const [pontoSelecionado, setPontoSelecionado] = useState<Ponto | null>(null);
     const [erros, setErros] = useState<ErrosForm>({});
 
     useEffect(() => {
@@ -52,11 +52,10 @@ export function NovaDoacaoModal(
     }, [visible, doacaoExistente]);
 
     function limparFormulario() {
-        setTipoItem('')
-        setQtdItem('')
-        setPontoSelecionado(null)
-        setDropdownAberto(false)
-        setErros({})
+        setTipoItem('');
+        setQtdItem('');
+        setPontoSelecionado(null);
+        setErros({});
     }
 
     function fechar() {
@@ -65,7 +64,7 @@ export function NovaDoacaoModal(
     }
 
     function validar(): boolean {
-        const novosErros: ErrosForm = {}
+        const novosErros: ErrosForm = {};
         if (!tipoItem.trim()) {
             novosErros.nomeItem = 'O nome do item é obrigatório.';
         }
@@ -81,20 +80,20 @@ export function NovaDoacaoModal(
             novosErros.ponto = 'Selecione o ponto de destino.';
         }
 
-        setErros(novosErros)
+        setErros(novosErros);
         return Object.keys(novosErros).length === 0;
     }
 
     function salvar() {
-        if (!validar()) return
+        if (!validar()) return;
         onSave({
             id: doacaoExistente ? doacaoExistente.id : Date.now(),
             tipoItem: tipoItem.trim(),
             quantidade: Number(qtdItem),
             pontoId: pontoSelecionado!.id,
             criadoEm: doacaoExistente ? doacaoExistente.criadoEm : new Date().toISOString(),
-        })
-        fechar()
+        });
+        fechar();
     }
 
     return (
@@ -153,12 +152,13 @@ export function NovaDoacaoModal(
                                 placeholderTextColor={theme.colors.placeholder}
                                 value={tipoItem}
                                 onChangeText={(text) => {
-                                    setTipoItem(text)
-                                    if (erros.nomeItem) setErros((prev) => ({...prev, tipoItem: undefined}));
+                                    setTipoItem(text);
+                                    if (erros.nomeItem) setErros((prev) => ({...prev, nomeItem: undefined}));
                                 }}
                             />
                             {erros.nomeItem ? <Text style={styles.errorText}>{erros.nomeItem}</Text> : null}
                         </View>
+
                         <View style={styles.formGroup}>
                             <Text style={styles.inputLabel}>Quantidade*</Text>
                             <TextInput
@@ -186,76 +186,47 @@ export function NovaDoacaoModal(
                             />
                             {erros.qtdItem ? <Text style={styles.errorText}>{erros.qtdItem}</Text> : null}
                         </View>
+
                         <View style={styles.formGroup}>
                             <Text style={styles.inputLabel}>Ponto de Destino*</Text>
-                            <TouchableOpacity
-                                activeOpacity={0.8}
+                            <View
                                 style={[
-                                    styles.selectTrigger,
-                                    erros.ponto ? styles.inputError : null
+                                    styles.pickerContainer,
+                                    erros.ponto ? styles.inputError : null,
                                 ]}
-                                onPress={() => setDropdownAberto(prev => !prev)}
                             >
-                                <Text
-                                    numberOfLines={1}
+                                <Picker
+                                    prompt="Selecione o Ponto de Destino"
+                                    selectedValue={pontoSelecionado?.id}
+                                    onValueChange={(itemValue) => {
+                                        const ponto = pontosMock.find((p) => p.id === itemValue) || null;
+                                        setPontoSelecionado(ponto);
+                                        if (erros.ponto) {
+                                            setErros((prev) => ({...prev, ponto: undefined}));
+                                        }
+                                    }}
+                                    dropdownIconColor={theme.colors.textMuted}
                                     style={[
-                                        styles.selectTriggerText,
-                                        !pontoSelecionado && styles.placeholderText
+                                        styles.picker,
+                                        !pontoSelecionado && styles.pickerPlaceholder,
                                     ]}
+                                    itemStyle={styles.pickerItem}
                                 >
-                                    {pontoSelecionado ? pontoSelecionado.nome : 'Selecione um ponto'}
-                                </Text>
-                                <MaterialDesignIcons
-                                    name={dropdownAberto ? "chevron-up" : "chevron-down"}
-                                    size={20}
-                                    color={theme.colors.textMuted}
-                                />
-                            </TouchableOpacity>
+                                    {pontosMock.map(ponto => (
+                                        <Picker.Item
+                                            key={ponto.id}
+                                            label={ponto.nome}
+                                            value={ponto.id}
+                                            color={Platform.OS === 'android' ? '#1f1f26' : theme.colors.text}
+                                            style={{fontSize: theme.fontSize.sm}}
+                                        />
+                                    ))}
+                                </Picker>
+                            </View>
                             {erros.ponto ? <Text style={styles.errorText}>{erros.ponto}</Text> : null}
-                            {dropdownAberto && (
-                                <View style={styles.dropdownContainer}>
-                                    <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={true}>
-                                        {pontosMock.map(ponto => {
-                                            const selecionado = pontoSelecionado?.id === ponto.id
-                                            return (
-                                                <TouchableOpacity
-                                                    key={ponto.id}
-                                                    style={[
-                                                        styles.dropdownItem,
-                                                        selecionado && styles.dropdownItemSelected
-                                                    ]}
-                                                    onPress={() => {
-                                                        setPontoSelecionado(ponto);
-                                                        setDropdownAberto(false);
-                                                        if (erros.ponto) setErros(prev => ({
-                                                            ...prev,
-                                                            ponto: undefined
-                                                        }));
-                                                    }}
-                                                >
-                                                    <Text
-                                                        style={[
-                                                            styles.dropdownItemText,
-                                                            selecionado && styles.dropdownItemTextSelected
-                                                        ]}
-                                                    >
-                                                        {ponto.nome}
-                                                    </Text>
-                                                    {selecionado && (
-                                                        <MaterialDesignIcons
-                                                            name="check"
-                                                            size={18}
-                                                            color={theme.colors.primaryVibrant}
-                                                        />
-                                                    )}
-                                                </TouchableOpacity>
-                                            )
-                                        })}
-                                    </ScrollView>
-                                </View>
-                            )}
                         </View>
                     </ScrollView>
+
                     <View style={styles.modalFooter}>
                         <Pressable
                             style={({pressed}) => [
@@ -378,58 +349,27 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: theme.colors.borderSubtle,
     },
-    selectTrigger: {
+    pickerContainer: {
         backgroundColor: theme.colors.surfaceInput,
-        height: 46,
         borderRadius: theme.borderRadius.lg,
-        paddingHorizontal: theme.spacing.md,
         borderWidth: 1,
         borderColor: theme.colors.borderSubtle,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        ...(Platform.OS === 'android' ? {height: 48} : {}),
     },
-    selectTriggerText: {
-        fontSize: theme.fontSize.md,
+    picker: {
         color: theme.colors.text,
-        flex: 1,
-        marginRight: 8,
+        fontSize: theme.fontSize.md,
+        backgroundColor: 'transparent',
+        ...(Platform.OS === 'android' ? {height: 60} : {}),
     },
-    placeholderText: {
+    pickerPlaceholder: {
         color: theme.colors.placeholder,
     },
-    dropdownContainer: {
-        backgroundColor: theme.colors.surfaceInput,
-        borderColor: theme.colors.borderMedium,
-        borderWidth: 1,
-        borderRadius: theme.borderRadius.lg,
-        marginTop: theme.spacing.xs,
-        maxHeight: 180,
-        overflow: 'hidden',
-    },
-    dropdownScroll: {
-        flexGrow: 0,
-    },
-    dropdownItem: {
-        paddingHorizontal: theme.spacing.md,
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.borderSubtle,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    dropdownItemSelected: {
-        backgroundColor: theme.colors.surfaceElevated,
-    },
-    dropdownItemText: {
-        color: theme.colors.textSecondary,
+    pickerItem: {
+        color: theme.colors.text,
         fontSize: theme.fontSize.md,
-        flex: 1,
-    },
-    dropdownItemTextSelected: {
-        color: theme.colors.primaryVibrant,
-        fontWeight: 'bold',
     },
     modalFooter: {
         flexDirection: 'row',
