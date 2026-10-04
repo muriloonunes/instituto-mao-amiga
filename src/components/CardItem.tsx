@@ -2,9 +2,9 @@ import {Ponto} from "../types/produto";
 import {StyleSheet, TouchableOpacity, Text} from "react-native";
 import {theme} from "../theme/theme";
 
-export function PontoItem({ponto, onPress}: { ponto: Ponto; onPress: () => void }) {
+export function CardItem({ponto, onPress}: { ponto: Ponto; onPress: () => void }) {
     return (
-        <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={onPress}>
+        <TouchableOpacity style={styles.card} activeOpacity={0.75} onPress={onPress}>
             <Text style={styles.nome}>{ponto.nome}</Text>
             <Text style={styles.endereco}>📍 {ponto.endereco}</Text>
             <Text style={styles.diasHorarios}>🕒 {ponto.diasHorarios}</Text>
@@ -16,8 +16,8 @@ export function PontoItem({ponto, onPress}: { ponto: Ponto; onPress: () => void 
 const styles = StyleSheet.create({
     card: {
         backgroundColor: theme.colors.cardBackground,
-        borderRadius: theme.borderRadius.lg,
-        padding: theme.spacing.lg,
+        borderRadius: theme.borderRadius.xl,
+        padding: theme.spacing['2xl'],
         marginBottom: theme.spacing['2xl'],
         borderWidth: 1,
         borderColor: theme.colors.cardBorder,
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     nome: {
         fontSize: theme.fontSize['2xl'],
         fontWeight: 'bold',
-        color: theme.colors.text,
+        color: theme.colors.textWhite,
         marginBottom: theme.spacing.md,
     },
     endereco: {
@@ -43,6 +43,6 @@ const styles = StyleSheet.create({
     funcionamento: {
         fontSize: theme.fontSize.xs,
         fontWeight: '600',
-        color: theme.colors.primary,
+        color: theme.colors.primaryVibrant,
     },
 });

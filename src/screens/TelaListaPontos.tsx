@@ -1,81 +1,51 @@
-import React, {useEffect, useMemo, useState} from 'react';
-import {FlatList, Pressable, StyleSheet, Text, TextInput} from 'react-native';
-import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
+import React, {useMemo, useState} from 'react';
+import {FlatList, KeyboardAvoidingView, Platform, StyleSheet, Text, useWindowDimensions} from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {pontosMock} from "../mocks/pontosMock";
-import {PontoItem} from "../components/PontoItem";
+import {CardItem} from "../components/CardItem";
 import {theme} from "../theme/theme";
-import {NovaDoacaoModal} from "../components/NovaDoacaoModal";
-import {Doacao} from "../types/doacao";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {InputPesquisar} from "../components/InputPesquisar";
 
-const CHAVE_DOACOES = '@mao_amiga:doacoes';
+export function TelaListaPontos({navigation}: any) {
+    const {width} = useWindowDimensions();
+    const telaLarga = width >= 768;
 
-function TelaListaPontos({navigation}: any) {
-    const [busca, setBusca] = useState('')
+    const paddingInferior = telaLarga ? theme.spacing['3xl'] : 65;
+
+    const [busca, setBusca] = useState('');
     const pontosFiltrados = useMemo(() => {
-        return pontosMock.filter(ponto => ponto.nome.toLowerCase().includes(busca.toLowerCase()))
-    }, [busca])
-
-    const [doacoes, setDoacoes] = useState<Doacao[]>([])
-
-    useEffect(() => {
-        AsyncStorage.getItem(CHAVE_DOACOES).then((salvo) => {
-            if (salvo) setDoacoes(JSON.parse(salvo));
-        });
-    }, []);
-
-    function salvarDoacoes(novaDoacao: Doacao) {
-        if (!novaDoacao) return
-
-        setDoacoes((prevDoacoes) => {
-            const doacoesAtualizadas = [...prevDoacoes, novaDoacao];
-            AsyncStorage.setItem(CHAVE_DOACOES, JSON.stringify(doacoesAtualizadas));
-            return doacoesAtualizadas;
-        })
-    }
-
-    const [modalVisible, setModalVisible] = useState(false);
+        const termo = busca.trim().toLowerCase();
+        return pontosMock.filter(ponto => ponto.nome.toLowerCase().includes(termo));
+    }, [busca]);
 
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleText}>Pontos de Coleta</Text>
-            <TextInput
-                style={styles.inputBusca}
-                placeholder="Buscar pontos..."
-                placeholderTextColor={theme.colors.placeholder}
-                value={busca}
-                onChangeText={setBusca}
-                autoCorrect={false}
-            />
-            <NovaDoacaoModal
-                visible={modalVisible}
-                onClose={() => setModalVisible(false)}
-                onSave={(doacao: Doacao) => {
-                    salvarDoacoes(doacao)
-                }}/>
-            <Pressable
-                style={styles.floatingButton}
-                onPress={() => setModalVisible(true)}
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={styles.keyboardContainer}
             >
-                <MaterialDesignIcons name='plus' color='white' size={32}/>
-            </Pressable>
-            <FlatList
-                data={pontosFiltrados}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({item}) => (
-                    <PontoItem
-                        ponto={item}
-                        onPress={() => navigation.navigate('TelaDetalhePonto', {pontoId: item.id})}
-                    />
-                )}
-                contentContainerStyle={styles.listaContainer}
-            />
+                <InputPesquisar placeholder="Buscar pontos" busca={busca} setBusca={setBusca}/>
+                <FlatList
+                    data={pontosFiltrados}
+                    keyExtractor={(item) => item.id.toString()}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
+                    renderItem={({item}) => (
+                        <CardItem
+                            ponto={item}
+                            onPress={() => navigation.navigate('TelaDetalhePonto', {pontoId: item.id})}
+                        />
+                    )}
+                    contentContainerStyle={[
+                        styles.listaContainer,
+                        {paddingBottom: paddingInferior}
+                    ]}
+                />
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
-
-export default TelaListaPontos;
 
 const styles = StyleSheet.create({
     container: {
@@ -89,22 +59,11 @@ const styles = StyleSheet.create({
         marginLeft: theme.spacing['2xl'],
         marginTop: theme.spacing['2xl'],
     },
-    inputBusca: {
-        backgroundColor: theme.colors.cardBackground,
-        color: theme.colors.text,
-        height: 50,
-        borderRadius: theme.borderRadius.sm,
-        paddingHorizontal: theme.spacing['2xl'],
-        fontSize: theme.fontSize.xl,
-        marginHorizontal: theme.spacing['2xl'],
-        marginTop: theme.spacing['2xl'],
-        marginBottom: theme.spacing.md,
-        borderWidth: 1,
-        borderColor: theme.colors.cardBorder,
+    keyboardContainer: {
+        flex: 1,
     },
     listaContainer: {
         padding: theme.spacing['2xl'],
-        paddingBottom: theme.spacing['3xl'],
     },
     floatingButton: {
         backgroundColor: theme.colors.primary,
