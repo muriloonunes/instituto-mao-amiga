@@ -1,7 +1,7 @@
 import React from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import {pontosMock} from "../mocks/pontosMock";
-import {Ponto} from "../types/produto";
+import {Ponto} from "../types/ponto";
 import {theme} from "../theme/theme";
 
 export function TelaDetalhePonto({route}: any) {

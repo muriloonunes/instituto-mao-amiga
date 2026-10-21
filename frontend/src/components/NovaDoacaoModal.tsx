@@ -1,4 +1,4 @@
-import {Ponto} from "../types/produto";
+import {Ponto} from "../types/ponto";
 import {
     KeyboardAvoidingView,
     Modal,
@@ -18,7 +18,7 @@ import {pontosMock} from "../mocks/pontosMock";
 import {Doacao} from "../types/doacao";
 import {Picker} from "@react-native-picker/picker";
 
-type NovoPontoModalProps = {
+type NovaDoacaoModalProps = {
     visible: boolean;
     onClose: () => void;
     onSave: (doacao: Doacao) => void;
@@ -32,7 +32,7 @@ type ErrosForm = {
 };
 
 export function NovaDoacaoModal(
-    {visible, onClose, onSave, doacaoExistente}: NovoPontoModalProps
+    {visible, onClose, onSave, doacaoExistente}: NovaDoacaoModalProps
 ) {
     const [tipoItem, setTipoItem] = useState('');
     const [qtdItem, setQtdItem] = useState('');
@@ -67,6 +67,9 @@ export function NovaDoacaoModal(
         const novosErros: ErrosForm = {};
         if (!tipoItem.trim()) {
             novosErros.nomeItem = 'O nome do item é obrigatório.';
+        }
+        if (tipoItem.trim().length > 50) {
+            novosErros.nomeItem = 'O nome do item deve ter no máximo 50 caracteres.';
         }
         if (!qtdItem.trim()) {
             novosErros.qtdItem = 'A quantidade é obrigatória.';
