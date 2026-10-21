@@ -7,7 +7,9 @@ public record PontoResponseDTO(
         String nome,
         String endereco,
         String diasHorarios,
-        String funcionamento
+        String funcionamento,
+        Double latitude,
+        Double longitude
 ) {
     public PontoResponseDTO(Ponto ponto) {
         this(
@@ -15,7 +17,9 @@ public record PontoResponseDTO(
                 ponto.getNome(),
                 ponto.getEndereco(),
                 ponto.getDiasHorarios(),
-                ponto.getFuncionamento()
+                ponto.getFuncionamento(),
+                ponto.getLatitude(),
+                ponto.getLongitude()
         );
     }
 }

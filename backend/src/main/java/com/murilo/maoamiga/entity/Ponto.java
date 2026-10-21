@@ -17,11 +17,21 @@ public class Ponto {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Column(nullable = false)
     private String nome;
 
+    @Column(nullable = false)
     private String endereco;
 
+    @Column(nullable = false)
     private String diasHorarios;
 
+    @Column(nullable = false)
     private String funcionamento;
+
+    @Column(nullable = false)
+    private Double latitude;
+
+    @Column(nullable = false)
+    private Double longitude;
 }
