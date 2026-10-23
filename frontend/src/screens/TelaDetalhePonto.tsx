@@ -1,5 +1,5 @@
 import React, {useCallback, useState} from 'react';
-import {ActivityIndicator, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {Ponto} from "../types/ponto";
 import {theme} from "../theme/theme";
 import {useFocusEffect} from "@react-navigation/native";
@@ -10,42 +10,46 @@ export function TelaDetalhePonto({route}: any) {
     const {pontoId} = route.params;
     const [ponto, setPonto] = React.useState<Ponto | null>(null);
     const [carregando, setCarregando] = useState(true);
+    const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
+
+    const carregarDados = useCallback(async () => {
+        setErro(null);
+        try {
+            const response = await buscarPontoPorId(pontoId)
+            setPonto(response)
+        } catch (erro) {
+            if (erro instanceof ApiError && erro.status === 0) {
+                setErro('Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.')
+            } else {
+                setErro('Ocorreu um erro ao carregar os pontos. Por favor, tente novamente mais tarde.')
+                console.error(erro)
+            }
+        }
+    }, [])
+
+    const onRefresh = useCallback(async () => {
+        setAtualizando(true)
+        await carregarDados();
+        setAtualizando(false)
+    }, [carregarDados]);
 
     useFocusEffect(
         useCallback(() => {
             let ativo = true
 
-            async function carregar() {
+            async function carregarInicial() {
                 setCarregando(true)
-
-                try {
-                    const response = await buscarPontoPorId(pontoId)
-                    if (ativo) {
-                        setPonto(response)
-                    }
-                } catch (erro) {
-                    if (ativo) {
-                        if (erro instanceof ApiError && erro.status === 0) {
-                            setErro('Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.')
-                        } else {
-                            setErro('Ocorreu um erro ao carregar os pontos. Por favor, tente novamente mais tarde.')
-                            console.error(erro)
-                        }
-                    }
-                } finally {
-                    if (ativo) {
-                        setCarregando(false)
-                    }
-                }
+                await carregarDados();
+                if (ativo) setCarregando(false);
             }
 
-            carregar();
+            carregarInicial();
 
             return () => {
                 ativo = false
             }
-        }, [])
+        }, [carregarDados])
     )
 
     if (!ponto) {
@@ -57,13 +61,26 @@ export function TelaDetalhePonto({route}: any) {
     }
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.detalheScroll}>
+        <View style={styles.container}>
             {carregando ? (
                 <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
             ) : (
-                <PontoDetalhe ponto={ponto}/>
+                <ScrollView
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={atualizando}
+                            onRefresh={onRefresh}
+                            colors={[theme.colors.primaryVibrant]}
+                            progressBackgroundColor={theme.colors.surfaceModal}
+                            tintColor={theme.colors.primaryVibrant}
+                        />
+                    }
+                    contentContainerStyle={styles.detalheScroll}
+                >
+                    <PontoDetalhe ponto={ponto}/>
+                </ScrollView>
             )}
-        </ScrollView>
+        </View>
     );
 }
 

@@ -1,12 +1,13 @@
 import React, {useCallback, useMemo, useState} from 'react';
 import {
     ActivityIndicator,
-    FlatList,
+    FlatList, Image,
     KeyboardAvoidingView,
-    Platform, RefreshControl,
+    Platform,
+    RefreshControl,
     StyleSheet,
     Text,
-    useWindowDimensions
+    useWindowDimensions, View
 } from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {CardItem} from "../components/CardItem";
@@ -38,7 +39,8 @@ export function TelaListaPontos({navigation}: any) {
         setErro(null);
         try {
             const response = await listarPontos(0, 20);
-            setPontos(response.content);
+            // setPontos(response.content);
+            setPontos([]);
         } catch (err) {
             if (err instanceof ApiError && err.status === 0) {
                 setErro('Não foi possível conectar ao servidor. Verifique sua conexão.');
@@ -95,6 +97,15 @@ export function TelaListaPontos({navigation}: any) {
                                 onPress={() => navigation.navigate('TelaDetalhePonto', {pontoId: item.id})}
                             />
                         )}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={atualizando}
+                                onRefresh={onRefresh}
+                                colors={[theme.colors.primaryVibrant]}
+                                progressBackgroundColor={theme.colors.surfaceModal}
+                                tintColor={theme.colors.primaryVibrant}
+                            />
+                        }
                         contentContainerStyle={[
                             styles.listaContainer,
                             {paddingBottom: paddingInferior}
