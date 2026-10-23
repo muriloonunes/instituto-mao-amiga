@@ -1,12 +1,52 @@
-import React from 'react';
-import {ScrollView, StyleSheet, Text, View} from 'react-native';
-import {pontosMock} from "../mocks/pontosMock";
+import React, {useCallback, useState} from 'react';
+import {ActivityIndicator, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {Ponto} from "../types/ponto";
 import {theme} from "../theme/theme";
+import {useFocusEffect} from "@react-navigation/native";
+import {buscarPontoPorId} from "../services/pontosService";
+import {ApiError} from "../types/api";
 
 export function TelaDetalhePonto({route}: any) {
     const {pontoId} = route.params;
-    const ponto = pontosMock.find((item) => item.id === pontoId);
+    const [ponto, setPonto] = React.useState<Ponto | null>(null);
+    const [carregando, setCarregando] = useState(true);
+    const [erro, setErro] = useState<string | null>(null);
+
+    useFocusEffect(
+        useCallback(() => {
+            let ativo = true
+
+            async function carregar() {
+                setCarregando(true)
+
+                try {
+                    const response = await buscarPontoPorId(pontoId)
+                    if (ativo) {
+                        setPonto(response)
+                    }
+                } catch (erro) {
+                    if (ativo) {
+                        if (erro instanceof ApiError && erro.status === 0) {
+                            setErro('Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.')
+                        } else {
+                            setErro('Ocorreu um erro ao carregar os pontos. Por favor, tente novamente mais tarde.')
+                            console.error(erro)
+                        }
+                    }
+                } finally {
+                    if (ativo) {
+                        setCarregando(false)
+                    }
+                }
+            }
+
+            carregar();
+
+            return () => {
+                ativo = false
+            }
+        }, [])
+    )
 
     if (!ponto) {
         return (
@@ -18,7 +58,11 @@ export function TelaDetalhePonto({route}: any) {
 
     return (
         <ScrollView style={styles.container} contentContainerStyle={styles.detalheScroll}>
-            <PontoDetalhe ponto={ponto}/>
+            {carregando ? (
+                <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
+            ) : (
+                <PontoDetalhe ponto={ponto}/>
+            )}
         </ScrollView>
     );
 }
