@@ -1,13 +1,13 @@
 import React, {useCallback, useMemo, useState} from 'react';
 import {
     ActivityIndicator,
-    FlatList, Image,
+    FlatList,
     KeyboardAvoidingView,
     Platform,
     RefreshControl,
     StyleSheet,
     Text,
-    useWindowDimensions, View
+    useWindowDimensions
 } from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {CardItem} from "../components/CardItem";
@@ -17,6 +17,9 @@ import {useFocusEffect} from "@react-navigation/native";
 import {Ponto} from "../types/ponto";
 import {listarPontos} from "../services/pontosService";
 import {ApiError} from "../types/api";
+import {EmptyState} from "../components/EmptyState";
+import Empty from '../../assets/empty.svg'
+import NoResult from '../../assets/no-result.svg'
 
 export function TelaListaPontos({navigation}: any) {
     const {width} = useWindowDimensions();
@@ -39,8 +42,7 @@ export function TelaListaPontos({navigation}: any) {
         setErro(null);
         try {
             const response = await listarPontos(0, 20);
-            // setPontos(response.content);
-            setPontos([]);
+            setPontos(response.content);
         } catch (err) {
             if (err instanceof ApiError && err.status === 0) {
                 setErro('Não foi possível conectar ao servidor. Verifique sua conexão.');
@@ -97,6 +99,24 @@ export function TelaListaPontos({navigation}: any) {
                                 onPress={() => navigation.navigate('TelaDetalhePonto', {pontoId: item.id})}
                             />
                         )}
+                        ListEmptyComponent={() => (
+                            <EmptyState
+                                icon={busca.trim()
+                                    ? <NoResult width={250} height={250}/>
+                                    : <Empty width={300} height={250}/>
+                                }
+                                mensagem={
+                                    busca.trim()
+                                        ? `Nenhum ponto encontrado para "${busca}"`
+                                        : 'Nenhum ponto de coleta cadastrado'
+                                }
+                                subtitulo={
+                                    busca.trim()
+                                        ? 'Verifique a ortografia ou tente outro termo.'
+                                        : 'Puxe para baixo para verificar novamente.'
+                                }
+                            />
+                        )}
                         refreshControl={
                             <RefreshControl
                                 refreshing={atualizando}
@@ -108,6 +128,7 @@ export function TelaListaPontos({navigation}: any) {
                         }
                         contentContainerStyle={[
                             styles.listaContainer,
+                            pontosFiltrados.length === 0 && styles.listaVaziaContainer,
                             {paddingBottom: paddingInferior}
                         ]}
                     />
@@ -134,6 +155,9 @@ const styles = StyleSheet.create({
     },
     listaContainer: {
         padding: theme.spacing['2xl'],
+    },
+    listaVaziaContainer: {
+        flexGrow: 1,
     },
     floatingButton: {
         backgroundColor: theme.colors.primary,

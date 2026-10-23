@@ -4,14 +4,11 @@ import {
     FlatList,
     KeyboardAvoidingView,
     Platform,
-    Pressable,
     StyleSheet,
     Text,
     useWindowDimensions,
-    View,
 } from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
-import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import {theme} from "../theme/theme";
 import {Doacao} from "../types/doacao";
 import {CardDoacao} from "../components/CardDoacao";
@@ -19,6 +16,9 @@ import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {listarDoacoes} from "../services/doacoesStorage";
 import {InputPesquisar} from "../components/InputPesquisar";
 import {ResumoDoacoesCard} from "../components/ResumoDoacoesCard";
+import {EmptyState} from "../components/EmptyState";
+import Donate from "../../assets/donate.svg";
+import NoResult from "../../assets/no-result.svg";
 
 type TelaDoacoesProps = {
     onNovaDoacao?: () => void;
@@ -131,46 +131,24 @@ export function TelaDoacoes({onNovaDoacao, atualizacaoKey}: TelaDoacoesProps) {
                             {paddingBottom: paddingInferior},
                         ]}
                         ListEmptyComponent={() => (
-                            <View style={styles.emptyCard}>
-                                <View style={styles.iconContainer}>
-                                    <MaterialDesignIcons
-                                        name={doacoes.length === 0 ? "hand-heart-outline" : "magnify"}
-                                        size={40}
-                                        color={theme.colors.primaryVibrant}
-                                    />
-                                </View>
-
-                                <Text style={styles.emptyTitle}>
-                                    {doacoes.length === 0
-                                        ? "Nenhuma doação registrada ainda"
-                                        : "Nenhuma doação encontrada"}
-                                </Text>
-
-                                <Text style={styles.emptySubtitle}>
-                                    {doacoes.length === 0
+                            <EmptyState
+                                icon={doacoes.length === 0
+                                    ? <Donate width={300} height={180}/>
+                                    : <NoResult width={250} height={250}/>
+                                }
+                                mensagem={
+                                    doacoes.length === 0
+                                        ? "Nenhuma doação registrada ainda."
+                                        : "Nenhuma doação encontrada."
+                                }
+                                subtitulo={
+                                    doacoes.length === 0
                                         ? "Que tal começar a fazer o bem? Registre a primeira doação!"
-                                        : `Não encontramos resultados para "${busca}".`}
-                                </Text>
-
-                                {doacoes.length === 0 && (
-                                    <Pressable
-                                        style={({pressed}) => [
-                                            styles.buttonCriar,
-                                            pressed && styles.buttonCriarPressed,
-                                        ]}
-                                        onPress={onNovaDoacao}
-                                        accessibilityRole="button"
-                                        accessibilityLabel="Registrar Nova Doação"
-                                    >
-                                        <MaterialDesignIcons
-                                            name="plus"
-                                            size={22}
-                                            color={theme.colors.textWhite}
-                                        />
-                                        <Text style={styles.buttonCriarText}>Registrar doação</Text>
-                                    </Pressable>
-                                )}
-                            </View>
+                                        : `Não encontramos resultados para "${busca}".`
+                                }
+                                botaoTexto={doacoes.length === 0 ? "Registrar doação" : undefined}
+                                onBotaoPress={doacoes.length === 0 ? onNovaDoacao : undefined}
+                            />
                         )}
                     />
                 </KeyboardAvoidingView>
@@ -201,85 +179,5 @@ const styles = StyleSheet.create({
     emptyListContent: {
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    emptyCard: {
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: theme.spacing['3xl'],
-        paddingHorizontal: theme.spacing['2xl'],
-    },
-    iconContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: theme.colors.iconSurface,
-        borderWidth: 1,
-        borderColor: theme.colors.borderMedium,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: theme.spacing['2xl'],
-        ...Platform.select({
-            ios: {
-                shadowColor: theme.colors.primary,
-                shadowOffset: {width: 0, height: 4},
-                shadowOpacity: 0.25,
-                shadowRadius: 10,
-            },
-            android: {
-                elevation: 3,
-            },
-            default: {},
-        }),
-    },
-    emptyTitle: {
-        color: theme.colors.textWhite,
-        fontSize: theme.fontSize['2xl'],
-        fontWeight: '700',
-        textAlign: 'center',
-        marginBottom: theme.spacing.sm,
-    },
-    emptySubtitle: {
-        color: theme.colors.textSecondary,
-        fontSize: theme.fontSize.md,
-        lineHeight: 22,
-        textAlign: 'center',
-        maxWidth: 340,
-        marginBottom: theme.spacing['3xl'],
-    },
-    buttonCriar: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        minHeight: 46,
-        paddingHorizontal: theme.spacing['3xl'],
-        borderRadius: theme.borderRadius.lg,
-        backgroundColor: theme.colors.primary,
-        ...Platform.select({
-            ios: {
-                shadowColor: theme.colors.primary,
-                shadowOffset: {width: 0, height: 4},
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-            },
-            android: {
-                elevation: 4,
-            },
-            web: {
-                cursor: 'pointer',
-                transition: 'background-color 0.15s ease, transform 0.1s ease',
-            } as any,
-        }),
-    },
-    buttonCriarPressed: {
-        backgroundColor: theme.colors.primaryPressed,
-        opacity: Platform.OS === 'ios' ? 0.85 : 1,
-        transform: [{scale: 0.98}],
-    },
-    buttonCriarText: {
-        color: theme.colors.textWhite,
-        fontSize: theme.fontSize.lg,
-        fontWeight: 'bold',
-    },
+    }
 });

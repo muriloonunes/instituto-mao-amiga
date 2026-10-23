@@ -19,8 +19,13 @@ export function TelaDetalhePonto({route}: any) {
             const response = await buscarPontoPorId(pontoId)
             setPonto(response)
         } catch (erro) {
-            if (erro instanceof ApiError && erro.status === 0) {
-                setErro('Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.')
+            if (erro instanceof ApiError) {
+                if (erro.status === 0) {
+                    setErro('Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.')
+                }
+                if (erro.status === 404) {
+                    setErro('Ponto de coleta não encontrado.')
+                }
             } else {
                 setErro('Ocorreu um erro ao carregar os pontos. Por favor, tente novamente mais tarde.')
                 console.error(erro)
@@ -51,6 +56,14 @@ export function TelaDetalhePonto({route}: any) {
             }
         }, [carregarDados])
     )
+
+    if (carregando) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color={theme.colors.primaryVibrant} />
+            </View>
+        );
+    }
 
     if (!ponto) {
         return (
