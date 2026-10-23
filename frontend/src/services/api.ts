@@ -1,5 +1,6 @@
 import Constants from "expo-constants";
 import {Platform} from "react-native";
+import {ApiError} from "../types/api";
 
 const getBaseUrl = (): string => {
     const hostUri = Constants.expoConfig?.hostUri;
@@ -24,16 +25,25 @@ export const BASE_URL = getBaseUrl();
 export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${BASE_URL}${endpoint}`;
 
-    const response = await fetch(url, {
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers,
-        },
-    });
+    let response: Response;
+
+    try {
+        response = await fetch(url, {
+            ...options,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                ...(options?.headers || {}),
+            }
+        });
+    } catch (error) {
+        throw new ApiError(0, `Erro ao fazer a requisição para ${url}: ${error}`);
+    }
 
     if (!response.ok) {
-        throw new Error(`Erro ao fazer a requisição para ${url}: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        const message = errorText || `Erro ${response.status}`;
+        throw new ApiError(response.status, message);
     }
 
     return response.json() as Promise<T>;
