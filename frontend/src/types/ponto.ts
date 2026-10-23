@@ -4,4 +4,6 @@ export type Ponto = {
     endereco: string;
     diasHorarios: string;
     funcionamento: string;
+    latitude: number;
+    longitude: number;
 };

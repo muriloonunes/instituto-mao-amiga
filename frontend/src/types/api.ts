@@ -7,3 +7,11 @@ export class ApiError extends Error {
         this.status = status;
     }
 }
+
+export interface Page<T> {
+    content: T[];
+    last: boolean;
+    number: number;
+    totalPages: number;
+    totalElements: number;
+}
