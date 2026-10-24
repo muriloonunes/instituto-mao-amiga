@@ -11,23 +11,18 @@ export function TelaDetalhePonto({route}: any) {
     const [ponto, setPonto] = React.useState<Ponto | null>(null);
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
-    const [erro, setErro] = useState<string | null>(null);
+    const [erro, setErro] = useState<ApiError | null>(null);
 
-    const carregarDados = useCallback(async () => {
+    const carregarPonto = useCallback(async () => {
         setErro(null);
         try {
             const response = await buscarPontoPorId(pontoId)
             setPonto(response)
         } catch (erro) {
             if (erro instanceof ApiError) {
-                if (erro.status === 0) {
-                    setErro('Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.')
-                }
-                if (erro.status === 404) {
-                    setErro('Ponto de coleta não encontrado.')
-                }
+                setErro(erro)
             } else {
-                setErro('Ocorreu um erro ao carregar os pontos. Por favor, tente novamente mais tarde.')
+                setErro(new ApiError(-1, 'Ocorreu um erro ao carregar o ponto.'))
                 console.error(erro)
             }
         }
@@ -35,9 +30,9 @@ export function TelaDetalhePonto({route}: any) {
 
     const onRefresh = useCallback(async () => {
         setAtualizando(true)
-        await carregarDados();
+        await carregarPonto();
         setAtualizando(false)
-    }, [carregarDados]);
+    }, [carregarPonto]);
 
     useFocusEffect(
         useCallback(() => {
@@ -45,7 +40,7 @@ export function TelaDetalhePonto({route}: any) {
 
             async function carregarInicial() {
                 setCarregando(true)
-                await carregarDados();
+                await carregarPonto();
                 if (ativo) setCarregando(false);
             }
 
@@ -54,23 +49,24 @@ export function TelaDetalhePonto({route}: any) {
             return () => {
                 ativo = false
             }
-        }, [carregarDados])
+        }, [carregarPonto])
     )
 
     if (carregando) {
         return (
             <View style={styles.container}>
-                <ActivityIndicator size="large" color={theme.colors.primaryVibrant} />
+                <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
             </View>
         );
     }
 
     if (!ponto) {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.erroText}>Ponto de coleta não encontrado.</Text>
-            </View>
-        );
+        if (erro)
+            return (
+                <View style={styles.container}>
+                    <Text style={styles.erroText}>Ponto de coleta não encontrado.</Text>
+                </View>
+            );
     }
 
     return (
