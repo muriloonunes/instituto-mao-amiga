@@ -2,11 +2,14 @@ package com.murilo.maoamiga.service;
 
 import com.murilo.maoamiga.entity.Ponto;
 import com.murilo.maoamiga.entity.dto.PontoResponseDTO;
+import com.murilo.maoamiga.entity.dto.PontoResumoDTO;
 import com.murilo.maoamiga.exception.EntityNotFound;
 import com.murilo.maoamiga.repository.PontoRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  *
@@ -31,5 +34,9 @@ public class PontoService {
         return pontoRepository.findById(id).orElseThrow(
                 () -> new EntityNotFound("Ponto não encontrado")
         );
+    }
+
+    public List<PontoResumoDTO> listarResumo() {
+        return pontoRepository.findAllResumo();
     }
 }
