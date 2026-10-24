@@ -1,17 +1,24 @@
-import React, {useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View,} from 'react-native';
 import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import {theme} from '../theme/theme';
 import {Doacao} from '../types/doacao';
-import {pontosMock} from '../mocks/pontosMock';
 import {atualizarDoacao, excluirDoacao} from '../services/doacoesStorage';
 import {NovaDoacaoModal} from "../components/NovaDoacaoModal";
+import {ApiError} from "../types/api";
+import {buscarPontoPorId} from "../services/pontosService";
+import {useFocusEffect} from "@react-navigation/native";
+import {Ponto} from "../types/ponto";
 
 export function TelaDetalheDoacao({navigation, route}: any) {
     const [carregandoExclusao, setCarregandoExclusao] = useState(false);
     const [editarModalVisible, setEditarModalVisible] = useState(false);
     const [carregandoEdicao, setCarregandoEdicao] = useState(false);
     const [doacao, setDoacao] = useState<Doacao | undefined>(route?.params?.doacao);
+    const [ponto, setPonto] = useState<Ponto | null>(null);
+    const [carregando, setCarregando] = useState(true);
+    const [atualizando, setAtualizando] = useState(false);
+    const [erro, setErro] = useState<ApiError | null>(null);
 
     useEffect(() => {
         if (route?.params?.doacao) {
@@ -143,6 +150,48 @@ export function TelaDetalheDoacao({navigation, route}: any) {
         });
     }, [navigation, doacao, carregandoExclusao, carregandoEdicao]);
 
+    const pontoId = doacao?.pontoId;
+
+    const carregarPonto = useCallback(async () => {
+        if (pontoId == null) return;
+        setErro(null);
+        try {
+            const response = await buscarPontoPorId(pontoId)
+            setPonto(response)
+        } catch (erro) {
+            if (erro instanceof ApiError) {
+                setErro(erro)
+            } else {
+                setErro(new ApiError(-1, 'Ocorreu um erro ao carregar o ponto.'))
+                console.error(erro)
+            }
+        }
+    }, [pontoId])
+
+    const onRefresh = useCallback(async () => {
+        setAtualizando(true)
+        await carregarPonto();
+        setAtualizando(false)
+    }, [carregarPonto]);
+
+    useFocusEffect(
+        useCallback(() => {
+            let ativo = true
+
+            async function carregarInicial() {
+                setCarregando(true)
+                await carregarPonto();
+                if (ativo) setCarregando(false);
+            }
+
+            carregarInicial();
+
+            return () => {
+                ativo = false
+            }
+        }, [carregarPonto])
+    )
+
     if (!doacao) {
         return (
             <View style={styles.containerVazio}>
@@ -165,7 +214,6 @@ export function TelaDetalheDoacao({navigation, route}: any) {
         );
     }
 
-    const ponto = pontosMock.find((p) => p.id === doacao.pontoId);
     const dataFormatada = formatarDataLegivel(doacao.criadoEm);
 
     return (
