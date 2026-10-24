@@ -4,6 +4,7 @@ import {
     FlatList,
     KeyboardAvoidingView,
     Platform,
+    RefreshControl,
     StyleSheet,
     Text,
     useWindowDimensions,
@@ -19,6 +20,11 @@ import {ResumoDoacoesCard} from "../components/ResumoDoacoesCard";
 import {EmptyState} from "../components/EmptyState";
 import Donate from "../../assets/svg/donate.svg";
 import NoResult from "../../assets/svg/no-result.svg";
+import {PontoResumo} from "../types/ponto";
+import {listarPontosResumo} from "../services/pontosService";
+import {ApiError} from "../types/api";
+import Toast from "react-native-toast-message";
+import {getMensagemErro} from "../utils/erros";
 
 type TelaDoacoesProps = {
     onNovaDoacao?: () => void;
@@ -40,6 +46,45 @@ export function TelaDoacoes({onNovaDoacao, atualizacaoKey}: TelaDoacoesProps) {
 
     const [doacoes, setDoacoes] = useState<Doacao[]>([]);
     const [carregando, setCarregando] = useState(true);
+    const [pontos, setPontos] = useState<PontoResumo[]>([]);
+    const [atualizando, setAtualizando] = useState(false);
+    const [erroPontos, setErroPontos] = useState<ApiError | null>(null);
+    const mapaPontos = useMemo(() => {
+        return new Map(pontos.map(ponto => [ponto.id, ponto.nome]));
+    }, [pontos])
+
+    const carregarDados = useCallback(async () => {
+        const doacoes = await listarDoacoes();
+        setDoacoes(doacoes);
+
+        try {
+            const pontos = await listarPontosResumo();
+            setPontos(pontos);
+            setErroPontos(null);
+        } catch (error) {
+            console.error('Falha ao sincronizar pontos na TelaDoacoes:', error);
+            const apiError = error instanceof ApiError
+                ? error
+                : new ApiError(-1, 'Erro ao carregar pontos');
+
+            setErroPontos(apiError);
+
+            Toast.show({
+                type: 'error',
+                text1: getMensagemErro(error, {
+                    fallback: 'Não foi possível sincronizar os pontos. Verifique sua conexão e tente novamente.',
+                }),
+                position: 'bottom',
+                bottomOffset: paddingInferior + 25,
+            });
+        }
+    }, [])
+
+    const onRefresh = useCallback(async () => {
+        setAtualizando(true);
+        await carregarDados();
+        setAtualizando(false);
+    }, [carregarDados])
 
     const [busca, setBusca] = useState('');
     const doacoesFiltradas = useMemo(() => {
@@ -82,20 +127,18 @@ export function TelaDoacoes({onNovaDoacao, atualizacaoKey}: TelaDoacoesProps) {
         useCallback(() => {
             let ativo = true;
 
-            async function carregar() {
-                const doacoes = await listarDoacoes();
-                if (ativo && doacoes) {
-                    setDoacoes(doacoes);
-                    setCarregando(false);
-                }
+            async function carregarInicial() {
+                setCarregando(true);
+                await carregarDados();
+                if (ativo) setCarregando(false);
             }
 
-            carregar();
+            carregarInicial();
 
             return () => {
                 ativo = false;
             };
-        }, [atualizacaoKey])
+        }, [atualizacaoKey, carregarDados])
     );
 
     return (
@@ -121,10 +164,21 @@ export function TelaDoacoes({onNovaDoacao, atualizacaoKey}: TelaDoacoesProps) {
                         keyExtractor={(item) => item.id.toString()}
                         keyboardShouldPersistTaps="handled"
                         keyboardDismissMode="on-drag"
-                        renderItem={({item}) => CardDoacao({
-                            doacao: item,
-                            onPress: () => navigation.navigate('TelaDetalheDoacao', {doacao: item})
-                        })}
+                        renderItem={({item}) => {
+                            const nomeOuStatus = mapaPontos.get(item.pontoId) ?? (
+                                erroPontos
+                                    ? 'Ponto indisponível (offline)'
+                                    : 'Ponto não identificado'
+                            );
+
+                            return (
+                                <CardDoacao
+                                    doacao={item}
+                                    nomePonto={nomeOuStatus}
+                                    onPress={() => navigation.navigate('TelaDetalheDoacao', {doacao: item})}
+                                />
+                            )
+                        }}
                         contentContainerStyle={[
                             styles.listContent,
                             doacoes.length === 0 && styles.emptyListContent,
@@ -150,6 +204,15 @@ export function TelaDoacoes({onNovaDoacao, atualizacaoKey}: TelaDoacoesProps) {
                                 onBotaoPress={doacoes.length === 0 ? onNovaDoacao : undefined}
                             />
                         )}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={atualizando}
+                                onRefresh={onRefresh}
+                                colors={[theme.colors.primaryVibrant]}
+                                progressBackgroundColor={theme.colors.surfaceModal}
+                                tintColor={theme.colors.primaryVibrant}
+                            />
+                        }
                     />
                 </KeyboardAvoidingView>
             )}

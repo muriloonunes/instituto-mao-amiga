@@ -2,57 +2,14 @@ import {Doacao} from "../types/doacao";
 import {Pressable, StyleSheet, Text, View} from "react-native";
 import {theme} from "../theme/theme";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
-import {useCallback, useState} from "react";
-import {Ponto} from "../types/ponto";
-import {useFocusEffect} from "@react-navigation/native";
-import {ApiError} from "../types/api";
-import {buscarPontoPorId} from "../services/pontosService";
 
-export function CardDoacao({doacao, onPress}: { doacao: Doacao, onPress: () => void }) {
-    const [ponto, setPonto] = useState<Ponto | null>(null);
-    const [carregando, setCarregando] = useState(true);
-    const [atualizando, setAtualizando] = useState(false);
-    const [erro, setErro] = useState<ApiError | null>(null);
+interface CardDoacaoProps {
+    doacao: Doacao;
+    nomePonto?: string;
+    onPress: () => void;
+}
 
-    const carregarPonto = useCallback(async () => {
-        setErro(null);
-        try {
-            const response = await buscarPontoPorId(doacao.pontoId)
-            setPonto(response)
-        } catch (erro) {
-            if (erro instanceof ApiError) {
-                setErro(erro)
-            } else {
-                setErro(new ApiError(-1, 'Ocorreu um erro ao carregar o ponto.'))
-                console.error(erro)
-            }
-        }
-    }, [])
-
-    const onRefresh = useCallback(async () => {
-        setAtualizando(true)
-        await carregarPonto();
-        setAtualizando(false)
-    }, [carregarPonto]);
-
-    useFocusEffect(
-        useCallback(() => {
-            let ativo = true
-
-            async function carregarInicial() {
-                setCarregando(true)
-                await carregarPonto();
-                if (ativo) setCarregando(false);
-            }
-
-            carregarInicial();
-
-            return () => {
-                ativo = false
-            }
-        }, [carregarPonto])
-    )
-
+export function CardDoacao({ doacao, nomePonto, onPress }: CardDoacaoProps)  {
     const dataFormatada = new Date(doacao.criadoEm).toLocaleDateString();
 
     return (
@@ -82,10 +39,10 @@ export function CardDoacao({doacao, onPress}: { doacao: Doacao, onPress: () => v
                     <MaterialDesignIcons
                         name="map-marker-outline"
                         size={16}
-                        color={theme.colors.textMuted}
+                        color={nomePonto ? theme.colors.primaryVibrant : theme.colors.textMuted}
                     />
                     <Text style={styles.metaText} numberOfLines={1}>
-                        {ponto ? ponto.nome : 'Ponto não identificado'}
+                        {nomePonto ?? 'Ponto não identificado'}
                     </Text>
                 </View>
                 <View style={styles.metaRow}>
