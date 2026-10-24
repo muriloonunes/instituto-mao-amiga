@@ -7,3 +7,8 @@ export type Ponto = {
     latitude: number;
     longitude: number;
 };
+
+export type PontoResumo = {
+    id: number;
+    nome: string;
+}

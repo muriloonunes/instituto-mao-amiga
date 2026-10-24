@@ -1,5 +1,6 @@
-import {Ponto} from "../types/ponto";
+import {PontoResumo} from "../types/ponto";
 import {
+    ActivityIndicator,
     KeyboardAvoidingView,
     Modal,
     Platform,
@@ -14,9 +15,10 @@ import {
 import {theme} from "../theme/theme";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import React, {useEffect, useState} from "react";
-import {pontosMock} from "../mocks/pontosMock";
 import {Doacao} from "../types/doacao";
 import {Picker} from "@react-native-picker/picker";
+import {listarPontosResumo} from "../services/pontosService";
+import {ApiError} from "../types/api";
 
 type NovaDoacaoModalProps = {
     visible: boolean;
@@ -36,25 +38,56 @@ export function NovaDoacaoModal(
 ) {
     const [tipoItem, setTipoItem] = useState('');
     const [qtdItem, setQtdItem] = useState('');
-    const [pontoSelecionado, setPontoSelecionado] = useState<Ponto | null>(null);
+    const [pontoSelecionadoId, setPontoSelecionadoId] = useState<number | null>(null);
     const [erros, setErros] = useState<ErrosForm>({});
+    const [pontos, setPontos] = useState<PontoResumo[]>([]);
+    const [carregandoPontos, setCarregandoPontos] = useState(false);
+    const [erroPontos, setErroPontos] = useState<string | null>(null);
+    const [tentativa, setTentativa] = useState(0);
 
     useEffect(() => {
         if (visible && doacaoExistente) {
             setTipoItem(doacaoExistente.tipoItem);
             setQtdItem(doacaoExistente.quantidade.toString());
-            const ponto = pontosMock.find(p => p.id === doacaoExistente.pontoId) || null;
-            setPontoSelecionado(ponto);
+            setPontoSelecionadoId(doacaoExistente.pontoId);
             setErros({});
         } else if (visible && !doacaoExistente) {
             limparFormulario();
         }
     }, [visible, doacaoExistente]);
 
+    useEffect(() => {
+        if (!visible) return
+        let ativo = true
+        setCarregandoPontos(true)
+        setErroPontos(null)
+
+        listarPontosResumo()
+            .then((resposta) => {
+                if (ativo) setPontos(resposta)
+            })
+            .catch((erro) => {
+                if (!ativo) return
+                if (erro instanceof ApiError && erro.status === 0) {
+                    setErroPontos('Sem conexão com o servidor.')
+                } else {
+                    setErroPontos('Não foi possível carregar os pontos.')
+                    console.error(erro)
+                }
+            })
+            .finally(() => {
+                if (ativo) setCarregandoPontos(false)
+            })
+
+        return () => {
+            ativo = false
+        }
+    }, [visible, tentativa])
+
     function limparFormulario() {
         setTipoItem('');
         setQtdItem('');
-        setPontoSelecionado(null);
+        setPontoSelecionadoId(null);
         setErros({});
     }
 
@@ -79,7 +112,7 @@ export function NovaDoacaoModal(
             novosErros.qtdItem = 'A quantidade deve ser um número inteiro.';
         }
 
-        if (!pontoSelecionado) {
+        if (!pontoSelecionadoId) {
             novosErros.ponto = 'Selecione o ponto de destino.';
         }
 
@@ -93,7 +126,7 @@ export function NovaDoacaoModal(
             id: doacaoExistente ? doacaoExistente.id : Date.now(),
             tipoItem: tipoItem.trim(),
             quantidade: Number(qtdItem),
-            pontoId: pontoSelecionado!.id,
+            pontoId: pontoSelecionadoId!,
             criadoEm: doacaoExistente ? doacaoExistente.criadoEm : new Date().toISOString(),
         });
         fechar();
@@ -192,41 +225,77 @@ export function NovaDoacaoModal(
 
                         <View style={styles.formGroup}>
                             <Text style={styles.inputLabel}>Ponto de Destino*</Text>
-                            <View
-                                style={[
-                                    styles.pickerContainer,
-                                    erros.ponto ? styles.inputError : null,
-                                ]}
-                            >
-                                <Picker
-                                    prompt="Selecione o Ponto de Destino"
-                                    selectedValue={pontoSelecionado?.id}
-                                    onValueChange={(itemValue) => {
-                                        const ponto = pontosMock.find((p) => p.id === itemValue) || null;
-                                        setPontoSelecionado(ponto);
-                                        if (erros.ponto) {
-                                            setErros((prev) => ({...prev, ponto: undefined}));
-                                        }
-                                    }}
-                                    dropdownIconColor={theme.colors.textMuted}
+                            {carregandoPontos ? (
+                                <View style={[styles.pickerContainer, styles.pickerEstado]}>
+                                    <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
+                                    <Text style={styles.pickerEstadoTexto}>Carregando pontos...</Text>
+                                </View>
+                            ) : erroPontos ? (
+                                <View style={[styles.pickerContainer, styles.pickerEstado, styles.inputError]}>
+                                    <MaterialDesignIcons
+                                        name="alert-circle-outline"
+                                        size={18}
+                                        color={theme.colors.danger}
+                                    />
+                                    <Text style={[styles.pickerEstadoTexto, styles.pickerEstadoTextoFlex]}>
+                                        {erroPontos}
+                                    </Text>
+                                    <Pressable
+                                        onPress={() => setTentativa(t => t + 1)}
+                                        hitSlop={8}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Tentar carregar os pontos novamente"
+                                    >
+                                        <Text style={styles.pickerEstadoAcao}>Tentar novamente</Text>
+                                    </Pressable>
+                                </View>
+                            ) : pontos.length === 0 ? (
+                                <View style={[styles.pickerContainer, styles.pickerEstado]}>
+                                    <Text style={styles.pickerEstadoTexto}>Nenhum ponto cadastrado.</Text>
+                                </View>
+                            ) : (
+                                <View
                                     style={[
-                                        styles.picker,
-                                        !pontoSelecionado && styles.pickerPlaceholder,
+                                        styles.pickerContainer,
+                                        erros.ponto ? styles.inputError : null,
                                     ]}
-                                    itemStyle={styles.pickerItem}
                                 >
-                                    {pontosMock.map(ponto => (
+                                    <Picker
+                                        prompt="Selecione o Ponto de Destino"
+                                        selectedValue={pontoSelecionadoId}
+                                        onValueChange={(itemValue) => {
+                                            setPontoSelecionadoId(itemValue);
+                                            if (erros.ponto) {
+                                                setErros((prev) => ({...prev, ponto: undefined}));
+                                            }
+                                        }}
+                                        dropdownIconColor={theme.colors.textMuted}
+                                        style={[
+                                            styles.picker,
+                                            !pontoSelecionadoId && styles.pickerPlaceholder,
+                                        ]}
+                                        itemStyle={styles.pickerItem}
+                                    >
                                         <Picker.Item
-                                            key={ponto.id}
-                                            label={ponto.nome}
-                                            value={ponto.id}
-                                            color={Platform.OS === 'android' ? '#1f1f26' : theme.colors.text}
+                                            label="Selecione um ponto"
+                                            value={null}
+                                            enabled={false}
+                                            color={theme.colors.placeholder}
                                             style={{fontSize: theme.fontSize.sm}}
                                         />
-                                    ))}
-                                </Picker>
-                            </View>
-                            {erros.ponto ? <Text style={styles.errorText}>{erros.ponto}</Text> : null}
+                                        {pontos.map(ponto => (
+                                            <Picker.Item
+                                                key={ponto.id}
+                                                label={ponto.nome}
+                                                value={ponto.id}
+                                                color={Platform.OS === 'android' ? '#1f1f26' : theme.colors.text}
+                                                style={{fontSize: theme.fontSize.sm}}
+                                            />
+                                        ))}
+                                    </Picker>
+                                </View>
+                            )}
+                            {erros.ponto && !erroPontos ? <Text style={styles.errorText}>{erros.ponto}</Text> : null}
                         </View>
                     </ScrollView>
 
@@ -244,8 +313,13 @@ export function NovaDoacaoModal(
                         <Pressable
                             style={({pressed}) => [
                                 styles.buttonSave,
-                                {opacity: pressed ? 0.8 : 1}
+                                {opacity: pressed ? 0.8 : 1},
+                                (carregandoPontos || erroPontos!==null) && {opacity: 0.6}
                             ]}
+                            disabled={carregandoPontos || erroPontos!==null}
+                            accessibilityRole="button"
+                            accessibilityLabel="Salvar doação"
+                            accessibilityState={{disabled: carregandoPontos || !!erroPontos}}
                             onPress={salvar}
                         >
                             <MaterialDesignIcons name="check" size={18} color={theme.colors.textWhite}/>
@@ -373,6 +447,25 @@ const styles = StyleSheet.create({
     pickerItem: {
         color: theme.colors.text,
         fontSize: theme.fontSize.md,
+    },
+    pickerEstado: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: theme.spacing.sm,
+        paddingHorizontal: theme.spacing.md,
+        minHeight: 48,
+    },
+    pickerEstadoTexto: {
+        color: theme.colors.textMuted,
+        fontSize: theme.fontSize.sm,
+    },
+    pickerEstadoTextoFlex: {
+        flex: 1,
+    },
+    pickerEstadoAcao: {
+        color: theme.colors.primaryVibrant,
+        fontSize: theme.fontSize.sm,
+        fontWeight: '700',
     },
     modalFooter: {
         flexDirection: 'row',

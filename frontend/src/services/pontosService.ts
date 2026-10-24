@@ -1,4 +1,4 @@
-import {Ponto} from "../types/ponto";
+import {Ponto, PontoResumo} from "../types/ponto";
 import {Page} from "../types/api";
 import {apiFetch} from "./api";
 
@@ -14,4 +14,8 @@ export async function listarPontos(page = 0, size = 20, sort = 'id,asc'): Promis
 
 export async function buscarPontoPorId(id: number): Promise<Ponto> {
     return apiFetch<Ponto>(`/pontos/${id}`);
+}
+
+export async function listarPontosResumo(): Promise<PontoResumo[]> {
+    return apiFetch<PontoResumo[]>('/pontos/resumo');
 }
