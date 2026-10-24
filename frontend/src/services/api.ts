@@ -22,22 +22,40 @@ const getBaseUrl = (): string => {
 
 export const BASE_URL = getBaseUrl();
 
-export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+export interface FetchOptions extends RequestInit {
+    timeoutMs?: number;
+}
+
+export async function apiFetch<T>(endpoint: string, options?: FetchOptions): Promise<T> {
     const url = `${BASE_URL}${endpoint}`;
+    const timeoutMs = options?.timeoutMs ?? 10000;
+    const timeoutSignal = AbortSignal.timeout(timeoutMs);
+
+    const signal = options?.signal
+        ? AbortSignal.any([options.signal, timeoutSignal])
+        : timeoutSignal;
 
     let response: Response;
 
     try {
         response = await fetch(url, {
             ...options,
+            signal,
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 ...(options?.headers || {}),
             }
         });
-    } catch (error) {
-        throw new ApiError(0, `Erro ao fazer a requisição para ${url}: ${error}`);
+    } catch (error: any) {
+        if (error.name === 'TimeoutError' || timeoutSignal.aborted) {
+            throw new ApiError(408, `Tempo limite de requisição excedido (${timeoutMs}ms) para ${url}`);
+        }
+        if (error.name === 'AbortError') {
+            throw new ApiError(499, `Requisição cancelada para ${url}`);
+        }
+
+        throw new ApiError(0, `Erro ao fazer a requisição para ${url}: ${error.message || error}`);
     }
 
     if (!response.ok) {

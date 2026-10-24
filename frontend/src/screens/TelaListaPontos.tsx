@@ -7,7 +7,8 @@ import {
     RefreshControl,
     StyleSheet,
     Text,
-    useWindowDimensions
+    useWindowDimensions,
+    View
 } from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {CardItem} from "../components/CardItem";
@@ -18,8 +19,11 @@ import {Ponto} from "../types/ponto";
 import {listarPontos} from "../services/pontosService";
 import {ApiError} from "../types/api";
 import {EmptyState} from "../components/EmptyState";
-import Empty from '../../assets/empty.svg'
-import NoResult from '../../assets/no-result.svg'
+import Empty from '../../assets/svg/empty.svg'
+import NoResult from '../../assets/svg/no-result.svg'
+import Toast from "react-native-toast-message";
+import {getMensagemErro} from "../utils/erros";
+import {ErroState} from "../components/ErroState";
 
 export function TelaListaPontos({navigation}: any) {
     const {width} = useWindowDimensions();
@@ -30,64 +34,116 @@ export function TelaListaPontos({navigation}: any) {
     const [pontos, setPontos] = useState<Ponto[]>([])
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
-    const [erro, setErro] = useState<string | null>(null);
+    const [erro, setErro] = useState<ApiError | null>(null);
 
     const [busca, setBusca] = useState('');
     const pontosFiltrados = useMemo(() => {
         const termo = busca.trim().toLowerCase();
+        if (!termo) return pontos;
         return pontos.filter(ponto => ponto.nome?.toLowerCase().includes(termo) ?? false);
     }, [pontos, busca]);
 
-    const carregarDados = useCallback(async () => {
-        setErro(null);
+    const carregarDados = useCallback(async (isRefresh = false) => {
+        if (!isRefresh) setErro(null);
+
         try {
             const response = await listarPontos(0, 20);
             setPontos(response.content);
+            setErro(null);
         } catch (err) {
-            if (err instanceof ApiError && err.status === 0) {
-                setErro('Não foi possível conectar ao servidor. Verifique sua conexão.');
+            console.error(err);
+            const apiError = err instanceof ApiError ? err : new ApiError(-1, 'Erro desconhecido');
+
+            if (isRefresh && pontos.length > 0) {
+                Toast.show({
+                    type: 'error',
+                    text1: getMensagemErro(err, {
+                        fallback: 'Ocorreu um erro ao carregar os pontos. Tente novamente mais tarde.'
+                    }),
+                    position: 'bottom',
+                    bottomOffset: paddingInferior + 25
+                });
             } else {
-                setErro('Ocorreu um erro ao carregar os pontos.');
-                console.error(err);
+                setErro(apiError);
             }
         }
-    }, []);
+    }, [pontos.length]);
 
     const onRefresh = useCallback(async () => {
-        setAtualizando(true)
-        await carregarDados();
-        setAtualizando(false)
+        setAtualizando(true);
+        try {
+            await carregarDados(true);
+        } finally {
+            setAtualizando(false);
+        }
     }, [carregarDados]);
 
     useFocusEffect(
         useCallback(() => {
-            let ativo = true
+            let ativo = true;
 
             async function carregarInicial() {
                 setCarregando(true);
-                await carregarDados();
+                await carregarDados(false);
                 if (ativo) setCarregando(false);
             }
 
             carregarInicial();
 
             return () => {
-                ativo = false
-            }
+                ativo = false;
+            };
         }, [carregarDados])
-    )
+    );
+
+    const renderEmptyComponent = () => {
+        if (erro) {
+            return (
+                <ErroState
+                    erro={erro}
+                    fallback="Ocorreu um erro ao carregar os pontos."
+                />
+            );
+        }
+
+        if (busca.trim()) {
+            return (
+                <EmptyState
+                    icon={<NoResult width={250} height={250}/>}
+                    mensagem={`Nenhum ponto encontrado para "${busca}"`}
+                    subtitulo="Verifique a ortografia ou tente outro termo."
+                />
+            );
+        }
+
+        if (!carregando) {
+            return (
+                <EmptyState
+                    icon={<Empty width={300} height={250}/>}
+                    mensagem="Nenhum ponto de coleta cadastrado"
+                    subtitulo="Puxe para baixo para verificar novamente."
+                />
+            );
+        }
+
+        return null;
+    };
 
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleText}>Pontos de Coleta</Text>
             {carregando ? (
-                <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
+                </View>
             ) : (
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                     style={styles.keyboardContainer}
                 >
-                    <InputPesquisar placeholder="Buscar pontos" busca={busca} setBusca={setBusca}/>
+                    {(pontos.length > 0) &&
+                        <InputPesquisar placeholder="Buscar pontos" busca={busca} setBusca={setBusca}/>}
+
                     <FlatList
                         data={pontosFiltrados}
                         keyExtractor={(item) => item.id.toString()}
@@ -99,24 +155,7 @@ export function TelaListaPontos({navigation}: any) {
                                 onPress={() => navigation.navigate('TelaDetalhePonto', {pontoId: item.id})}
                             />
                         )}
-                        ListEmptyComponent={() => (
-                            <EmptyState
-                                icon={busca.trim()
-                                    ? <NoResult width={250} height={250}/>
-                                    : <Empty width={300} height={250}/>
-                                }
-                                mensagem={
-                                    busca.trim()
-                                        ? `Nenhum ponto encontrado para "${busca}"`
-                                        : 'Nenhum ponto de coleta cadastrado'
-                                }
-                                subtitulo={
-                                    busca.trim()
-                                        ? 'Verifique a ortografia ou tente outro termo.'
-                                        : 'Puxe para baixo para verificar novamente.'
-                                }
-                            />
-                        )}
+                        ListEmptyComponent={renderEmptyComponent}
                         refreshControl={
                             <RefreshControl
                                 refreshing={atualizando}
@@ -159,21 +198,9 @@ const styles = StyleSheet.create({
     listaVaziaContainer: {
         flexGrow: 1,
     },
-    floatingButton: {
-        backgroundColor: theme.colors.primary,
-        width: 60,
-        height: 60,
-        borderRadius: theme.borderRadius.xl,
+    loadingContainer: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        position: 'absolute',
-        bottom: 40,
-        right: 20,
-        elevation: 5,
-        shadowColor: theme.colors.shadow,
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        zIndex: 999,
-    },
+    }
 });

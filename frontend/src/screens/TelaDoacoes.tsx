@@ -17,8 +17,8 @@ import {listarDoacoes} from "../services/doacoesStorage";
 import {InputPesquisar} from "../components/InputPesquisar";
 import {ResumoDoacoesCard} from "../components/ResumoDoacoesCard";
 import {EmptyState} from "../components/EmptyState";
-import Donate from "../../assets/donate.svg";
-import NoResult from "../../assets/no-result.svg";
+import Donate from "../../assets/svg/donate.svg";
+import NoResult from "../../assets/svg/no-result.svg";
 
 type TelaDoacoesProps = {
     onNovaDoacao?: () => void;

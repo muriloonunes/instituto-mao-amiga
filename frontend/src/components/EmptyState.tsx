@@ -1,6 +1,6 @@
 import {Platform, Pressable, StyleSheet, Text, View} from "react-native";
 import {theme} from "../theme/theme";
-import Empty from '../../assets/empty.svg'
+import Empty from '../../assets/svg/empty.svg'
 import React, {ReactNode} from "react";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 

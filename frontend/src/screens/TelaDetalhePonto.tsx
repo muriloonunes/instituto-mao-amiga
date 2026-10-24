@@ -5,6 +5,9 @@ import {theme} from "../theme/theme";
 import {useFocusEffect} from "@react-navigation/native";
 import {buscarPontoPorId} from "../services/pontosService";
 import {ApiError} from "../types/api";
+import Toast from "react-native-toast-message";
+import {getMensagemErro} from "../utils/erros";
+import {ErroState} from "../components/ErroState";
 
 export function TelaDetalhePonto({route}: any) {
     const {pontoId} = route.params;
@@ -14,81 +17,94 @@ export function TelaDetalhePonto({route}: any) {
     const [erro, setErro] = useState<ApiError | null>(null);
 
     const carregarPonto = useCallback(async () => {
+        const response = await buscarPontoPorId(pontoId);
+        setPonto(response);
         setErro(null);
-        try {
-            const response = await buscarPontoPorId(pontoId)
-            setPonto(response)
-        } catch (erro) {
-            if (erro instanceof ApiError) {
-                setErro(erro)
-            } else {
-                setErro(new ApiError(-1, 'Ocorreu um erro ao carregar o ponto.'))
-                console.error(erro)
-            }
-        }
-    }, [])
+    }, [pontoId]);
 
     const onRefresh = useCallback(async () => {
-        setAtualizando(true)
-        await carregarPonto();
-        setAtualizando(false)
-    }, [carregarPonto]);
+        setAtualizando(true);
+        try {
+            await carregarPonto();
+        } catch (err) {
+            console.error(err);
+            const apiError = err instanceof ApiError ? err : new ApiError(-1, 'Erro desconhecido');
+            if (ponto) {
+                Toast.show({
+                    type: 'error',
+                    text1: getMensagemErro(err, {
+                        naoEncontrado: 'Ponto não encontrado.',
+                        fallback: 'Não foi possível atualizar os detalhes do ponto.'
+                    }),
+                    position: 'bottom',
+                });
+            } else {
+                setErro(apiError);
+            }
+        } finally {
+            setAtualizando(false);
+        }
+    }, [carregarPonto, ponto]);
 
     useFocusEffect(
         useCallback(() => {
-            let ativo = true
-
+            let ativo = true;
             async function carregarInicial() {
-                setCarregando(true)
-                await carregarPonto();
-                if (ativo) setCarregando(false);
+                setErro(null);
+                try {
+                    await carregarPonto();
+                } catch (err) {
+                    console.error(err);
+                    if (ativo) {
+                        setErro(err instanceof ApiError ? err : new ApiError(-1, 'Erro desconhecido'));
+                    }
+                } finally {
+                    if (ativo) setCarregando(false);
+                }
             }
-
             carregarInicial();
-
             return () => {
-                ativo = false
-            }
+                ativo = false;
+            };
         }, [carregarPonto])
-    )
+    );
+
 
     if (carregando) {
         return (
-            <View style={styles.container}>
+            <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
             </View>
         );
     }
 
-    if (!ponto) {
-        if (erro)
-            return (
-                <View style={styles.container}>
-                    <Text style={styles.erroText}>Ponto de coleta não encontrado.</Text>
-                </View>
-            );
-    }
-
     return (
         <View style={styles.container}>
-            {carregando ? (
-                <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
-            ) : (
-                <ScrollView
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={atualizando}
-                            onRefresh={onRefresh}
-                            colors={[theme.colors.primaryVibrant]}
-                            progressBackgroundColor={theme.colors.surfaceModal}
-                            tintColor={theme.colors.primaryVibrant}
-                        />
-                    }
-                    contentContainerStyle={styles.detalheScroll}
-                >
+            <ScrollView
+                refreshControl={
+                    <RefreshControl
+                        refreshing={atualizando}
+                        onRefresh={onRefresh}
+                        colors={[theme.colors.primaryVibrant]}
+                        progressBackgroundColor={theme.colors.surfaceModal}
+                        tintColor={theme.colors.primaryVibrant}
+                    />
+                }
+                contentContainerStyle={[
+                    styles.detalheScroll,
+                    (erro || !ponto) && styles.scrollVazio
+                ]}
+            >
+                {erro || !ponto ? (
+                    <ErroState
+                        erro={erro ?? new ApiError(404, 'Ponto não encontrado')}
+                        naoEncontrado="Ponto de coleta não encontrado."
+                        fallback="Não foi possível carregar os detalhes do ponto."
+                    />
+                ) : (
                     <PontoDetalhe ponto={ponto}/>
-                </ScrollView>
-            )}
+                )}
+            </ScrollView>
         </View>
     );
 }
@@ -116,6 +132,16 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.background,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: theme.colors.background,
+    },
+    scrollVazio: {
+        flexGrow: 1,
+        justifyContent: 'center',
     },
     detalheScroll: {
         padding: theme.spacing['2xl'],
