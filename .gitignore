@@ -1,0 +1,93 @@
+# ==============================================================================
+# Root .gitignore - Monorepo (Mão Amiga App)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Sistema Operacional & Arquivos Gerais
+# ------------------------------------------------------------------------------
+.DS_Store
+*.pem
+
+# ------------------------------------------------------------------------------
+# IDEs & Editores
+# ------------------------------------------------------------------------------
+# VS Code
+.vscode/
+
+# IntelliJ IDEA / Android Studio
+.idea/shelf/
+.idea/workspace.xml
+.idea/httpRequests/
+.idea/queries/
+.idea/dataSources/
+.idea/dataSources.local.xml
+*.iws
+*.ipr
+*.iml
+
+# STS (Spring Tool Suite / Eclipse)
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+
+# NetBeans
+**/nbproject/private/
+**/nbbuild/
+**/nbdist/
+**/.nb-gradle/
+
+# ------------------------------------------------------------------------------
+# Backend (Spring Boot / Java / Maven)
+# ------------------------------------------------------------------------------
+backend/HELP.md
+HELP.md
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+**/.mvn/wrapper/maven-wrapper.jar
+
+# ------------------------------------------------------------------------------
+# Frontend (React Native / Expo)
+# ------------------------------------------------------------------------------
+# Dependências
+node_modules/
+
+# Expo & Builds Web
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Builds Nativos & Certificados/Chaves
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Pastas nativas geradas pelo Expo Prebuild
+frontend/android/
+frontend/ios/
+
+# Metro Bundler
+.metro-health-check*
+
+# Logs de depuração
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Arquivos de ambiente locais
+.env*.local
+
+# TypeScript
+*.tsbuildinfo
