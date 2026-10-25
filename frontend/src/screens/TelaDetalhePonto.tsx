@@ -1,17 +1,17 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {Ponto} from "../types/ponto";
 import {theme} from "../theme/theme";
-import {useFocusEffect} from "@react-navigation/native";
 import {buscarPontoPorId} from "../services/pontosService";
 import {ApiError} from "../types/api";
 import Toast from "react-native-toast-message";
 import {getMensagemErro} from "../utils/erros";
 import {ErroState} from "../components/ErroState";
+import {TelaDetalhePontoProps} from "../types/navigation";
 
-export function TelaDetalhePonto({route}: any) {
+export function TelaDetalhePonto({route}: TelaDetalhePontoProps) {
     const {pontoId} = route.params;
-    const [ponto, setPonto] = React.useState<Ponto | null>(null);
+    const [ponto, setPonto] = useState<Ponto | null>(null);
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState<ApiError | null>(null);
@@ -46,28 +46,27 @@ export function TelaDetalhePonto({route}: any) {
         }
     }, [carregarPonto, ponto]);
 
-    useFocusEffect(
-        useCallback(() => {
-            let ativo = true;
-            async function carregarInicial() {
-                setErro(null);
-                try {
-                    await carregarPonto();
-                } catch (err) {
-                    console.error(err);
-                    if (ativo) {
-                        setErro(err instanceof ApiError ? err : new ApiError(-1, 'Erro desconhecido'));
-                    }
-                } finally {
-                    if (ativo) setCarregando(false);
+    useEffect(() => {
+        let ativo = true;
+
+        async function carregarInicial() {
+            setErro(null);
+            try {
+                await carregarPonto();
+            } catch (err) {
+                if (ativo) {
+                    setErro(err instanceof ApiError ? err : new ApiError(-1, 'Erro desconhecido'));
                 }
+            } finally {
+                if (ativo) setCarregando(false);
             }
-            carregarInicial();
-            return () => {
-                ativo = false;
-            };
-        }, [carregarPonto])
-    );
+        }
+
+        carregarInicial();
+        return () => {
+            ativo = false;
+        };
+    }, [carregarPonto]);
 
 
     if (carregando) {
@@ -187,11 +186,5 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: theme.colors.text,
         lineHeight: 18,
-    },
-    erroText: {
-        color: theme.colors.danger,
-        fontSize: theme.fontSize.xl,
-        textAlign: 'center',
-        marginTop: theme.spacing['4xl'],
     },
 });

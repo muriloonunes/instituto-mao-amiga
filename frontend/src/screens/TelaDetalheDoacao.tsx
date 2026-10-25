@@ -21,9 +21,23 @@ import {useFocusEffect} from "@react-navigation/native";
 import {Ponto} from "../types/ponto";
 import Toast from "react-native-toast-message";
 import {getMensagemErro} from "../utils/erros";
+import {TelaDetalheDoacaoProps} from "../types/navigation";
 
-export function TelaDetalheDoacao({navigation, route}: any) {
-    const [doacao, setDoacao] = useState<Doacao | undefined>(route?.params?.doacao);
+interface SecaoPontoDoacaoProps {
+    ponto: Ponto | null;
+    erro: ApiError | null;
+    carregando: boolean;
+    pontoId?: number;
+}
+
+interface LinhaInfoProps {
+    label: string;
+    valor?: string | number;
+    temDivisor?: boolean;
+}
+
+export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
+    const [doacao, setDoacao] = useState<Doacao | undefined>(route?.params.doacao);
     const [ponto, setPonto] = useState<Ponto | null>(null);
     const [erro, setErro] = useState<ApiError | null>(null);
 
@@ -174,13 +188,13 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                         accessibilityLabel="Editar Doação"
                     >
                         {statusAcao === 'editando' ? (
-                            <ActivityIndicator size="small" color={theme.colors.primaryVibrant} />
+                            <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
                         ) : (
-                            <MaterialDesignIcons name="pencil-outline" size={24} color={theme.colors.primaryVibrant} />
+                            <MaterialDesignIcons name="pencil-outline" size={24} color={theme.colors.primaryVibrant}/>
                         )}
                     </Pressable>
                     <Pressable
-                        style={({ pressed }) => [
+                        style={({pressed}) => [
                             styles.headerBotaoAcao,
                             pressed && styles.headerBotaoAcaoPressionado,
                             statusAcao === 'excluindo' && styles.headerBotaoDesabilitado,
@@ -197,9 +211,9 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                         accessibilityLabel="Excluir Doação"
                     >
                         {statusAcao === 'excluindo' ? (
-                            <ActivityIndicator size="small" color={theme.colors.danger} />
+                            <ActivityIndicator size="small" color={theme.colors.danger}/>
                         ) : (
-                            <MaterialDesignIcons name="trash-can-outline" size={24} color={theme.colors.danger} />
+                            <MaterialDesignIcons name="trash-can-outline" size={24} color={theme.colors.danger}/>
                         )}
                     </Pressable>
                 </View>
@@ -210,10 +224,10 @@ export function TelaDetalheDoacao({navigation, route}: any) {
     if (!doacao) {
         return (
             <View style={styles.containerVazio}>
-                <MaterialDesignIcons name="alert-circle-outline" size={48} color={theme.colors.danger} />
+                <MaterialDesignIcons name="alert-circle-outline" size={48} color={theme.colors.danger}/>
                 <Text style={styles.textoErro}>Doação não encontrada.</Text>
                 <Pressable
-                    style={({ pressed }) => [styles.botaoVoltar, pressed && styles.botaoPressionado]}
+                    style={({pressed}) => [styles.botaoVoltar, pressed && styles.botaoPressionado]}
                     onPress={() => navigation.goBack()}
                 >
                     <Text style={styles.botaoVoltarTexto}>Voltar</Text>
@@ -279,10 +293,11 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                 <View style={styles.secao}>
                     <Text style={styles.secaoTitulo}>INFORMAÇÕES DA DOAÇÃO</Text>
                     <View style={styles.card}>
-                        <LinhaInfo label="Item:" valor={doacao.tipoItem} />
-                        <LinhaInfo label="Quantidade:" valor={`${doacao.quantidade} ${doacao.quantidade === 1 ? 'unidade' : 'unidades'}`} />
-                        <LinhaInfo label="Data de Registro:" valor={dataFormatada} />
-                        <LinhaInfo label="Identificador:" valor={`#${doacao.id}`} temDivisor={false} />
+                        <LinhaInfo label="Item:" valor={doacao.tipoItem}/>
+                        <LinhaInfo label="Quantidade:"
+                                   valor={`${doacao.quantidade} ${doacao.quantidade === 1 ? 'unidade' : 'unidades'}`}/>
+                        <LinhaInfo label="Data de Registro:" valor={dataFormatada}/>
+                        <LinhaInfo label="Identificador:" valor={`#${doacao.id}`} temDivisor={false}/>
                     </View>
                 </View>
 
@@ -295,7 +310,7 @@ export function TelaDetalheDoacao({navigation, route}: any) {
 
                 <View style={styles.secaoBotao}>
                     <Pressable
-                        style={({ pressed }) => [
+                        style={({pressed}) => [
                             styles.botaoEditar,
                             pressed && styles.botaoEditarPressionado,
                             estaOcupado && styles.botaoDesabilitado,
@@ -307,17 +322,18 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                         accessibilityLabel="Editar Doação"
                     >
                         {statusAcao === 'editando' ? (
-                            <ActivityIndicator size="small" color={theme.colors.primaryVibrant} />
+                            <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
                         ) : (
                             <>
-                                <MaterialDesignIcons name="pencil-outline" size={20} color={theme.colors.primaryVibrant} />
+                                <MaterialDesignIcons name="pencil-outline" size={20}
+                                                     color={theme.colors.primaryVibrant}/>
                                 <Text style={styles.botaoEditarTexto}>Editar Doação</Text>
                             </>
                         )}
                     </Pressable>
 
                     <Pressable
-                        style={({ pressed }) => [
+                        style={({pressed}) => [
                             styles.botaoExcluir,
                             pressed && styles.botaoExcluirPressionado,
                             estaOcupado && styles.botaoDesabilitado,
@@ -329,10 +345,10 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                         accessibilityLabel="Excluir Doação"
                     >
                         {statusAcao === 'excluindo' ? (
-                            <ActivityIndicator size="small" color={theme.colors.danger} />
+                            <ActivityIndicator size="small" color={theme.colors.danger}/>
                         ) : (
                             <>
-                                <MaterialDesignIcons name="trash-can-outline" size={20} color={theme.colors.danger} />
+                                <MaterialDesignIcons name="trash-can-outline" size={20} color={theme.colors.danger}/>
                                 <Text style={styles.botaoExcluirTexto}>Excluir Doação</Text>
                             </>
                         )}
@@ -343,19 +359,19 @@ export function TelaDetalheDoacao({navigation, route}: any) {
     );
 }
 
-function LinhaInfo({ label, valor, temDivisor = true }: { label: string; valor?: string | number; temDivisor?: boolean }) {
+function LinhaInfo({label, valor, temDivisor = true}: LinhaInfoProps) {
     return (
         <>
             <View style={styles.campoLinha}>
                 <Text style={styles.campoLabel}>{label}</Text>
                 <Text style={styles.campoValor}>{valor}</Text>
             </View>
-            {temDivisor && <View style={styles.divisor} />}
+            {temDivisor && <View style={styles.divisor}/>}
         </>
     );
 }
 
-function SecaoPontoDoacao({ponto, erro, carregando, pontoId}: any) {
+function SecaoPontoDoacao({ponto, erro, carregando, pontoId}: SecaoPontoDoacaoProps) {
     return (
         <View style={styles.secao}>
             <Text style={styles.secaoTitulo}>PONTO DE DESTINO</Text>

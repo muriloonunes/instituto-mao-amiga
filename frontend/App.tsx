@@ -7,8 +7,9 @@ import {theme} from './src/theme/theme';
 import {BottomBar} from "./src/components/BottomBar";
 import {TelaDetalheDoacao} from "./src/screens/TelaDetalheDoacao";
 import Toast from "react-native-toast-message";
+import {RootStackParamList} from "./src/types/navigation";
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
     return (
