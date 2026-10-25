@@ -6,7 +6,15 @@
     <file type="web" url="file://$PROJECT_DIR$/node_modules/expo-modules-autolinking/android/expo-gradle-plugin" />
     <file type="web" url="file://$PROJECT_DIR$/node_modules/expo-modules-core/expo-module-gradle-plugin" />
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_26" project-jdk-name="temurin-17" project-jdk-type="JavaSDK">
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/backend/mao-amiga-app/pom.xml" />
+        <option value="$PROJECT_DIR$/backend/pom.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_26" project-jdk-name="temurin-26" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>
