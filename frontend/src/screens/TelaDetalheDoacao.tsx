@@ -1,5 +1,15 @@
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
-import {ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View,} from 'react-native';
+import {
+    ActivityIndicator,
+    Alert,
+    Platform,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native';
 import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import {theme} from '../theme/theme';
 import {Doacao} from '../types/doacao';
@@ -9,16 +19,21 @@ import {ApiError} from "../types/api";
 import {buscarPontoPorId} from "../services/pontosService";
 import {useFocusEffect} from "@react-navigation/native";
 import {Ponto} from "../types/ponto";
+import Toast from "react-native-toast-message";
+import {getMensagemErro} from "../utils/erros";
 
 export function TelaDetalheDoacao({navigation, route}: any) {
-    const [carregandoExclusao, setCarregandoExclusao] = useState(false);
-    const [editarModalVisible, setEditarModalVisible] = useState(false);
-    const [carregandoEdicao, setCarregandoEdicao] = useState(false);
     const [doacao, setDoacao] = useState<Doacao | undefined>(route?.params?.doacao);
     const [ponto, setPonto] = useState<Ponto | null>(null);
-    const [carregando, setCarregando] = useState(true);
-    const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState<ApiError | null>(null);
+
+    const [modalEditarVisivel, setModalEditarVisivel] = useState(false);
+    const [atualizando, setAtualizando] = useState(false);
+    const [carregandoPonto, setCarregandoPonto] = useState(true);
+    const [statusAcao, setStatusAcao] = useState<'idle' | 'editando' | 'excluindo'>('idle');
+
+    const estaOcupado = statusAcao !== 'idle';
+    const pontoId = doacao?.pontoId;
 
     useEffect(() => {
         if (route?.params?.doacao) {
@@ -26,18 +41,80 @@ export function TelaDetalheDoacao({navigation, route}: any) {
         }
     }, [route?.params?.doacao]);
 
+    useEffect(() => {
+        setPonto(null);
+        setErro(null);
+    }, [pontoId]);
+
+    const carregarPonto = useCallback(async () => {
+        if (pontoId == null) return;
+        const response = await buscarPontoPorId(pontoId);
+        setPonto(response);
+        setErro(null);
+    }, [pontoId]);
+
+    const onRefresh = useCallback(async () => {
+        setAtualizando(true);
+        try {
+            await carregarPonto();
+        } catch (err: any) {
+            console.error(err);
+            const apiError = err instanceof ApiError ? err : new ApiError(-1, 'Erro desconhecido');
+
+            if (ponto) {
+                Toast.show({
+                    type: 'error',
+                    text1: getMensagemErro(err, {
+                        naoEncontrado: 'Ponto não encontrado.',
+                        fallback: 'Não foi possível atualizar os detalhes do ponto.',
+                    }),
+                    position: 'bottom',
+                });
+            } else {
+                setErro(apiError);
+            }
+        } finally {
+            setAtualizando(false);
+        }
+    }, [carregarPonto, ponto]);
+
+    useFocusEffect(
+        useCallback(() => {
+            let ativo = true;
+
+            (async () => {
+                setCarregandoPonto(true);
+                try {
+                    await carregarPonto();
+                } catch (err: any) {
+                    console.error(err);
+                    if (ativo) {
+                        setErro(err instanceof ApiError ? err : new ApiError(-1, 'Erro desconhecido'));
+                    }
+                } finally {
+                    if (ativo) setCarregandoPonto(false);
+                }
+            })();
+
+            return () => {
+                ativo = false;
+            };
+        }, [carregarPonto])
+    );
+
     async function onConfirmEditar(novaDoacao: Doacao) {
         if (!novaDoacao) return;
 
         try {
-            setCarregandoEdicao(true);
+            setStatusAcao('editando');
             await atualizarDoacao(novaDoacao);
             setDoacao(novaDoacao);
             navigation.setParams({doacao: novaDoacao});
-        } catch (error) {
+            setModalEditarVisivel(false);
+        } catch {
             Alert.alert('Erro', 'Não foi possível editar a doação.');
         } finally {
-            setCarregandoEdicao(false);
+            setStatusAcao('idle');
         }
     }
 
@@ -45,23 +122,18 @@ export function TelaDetalheDoacao({navigation, route}: any) {
         if (!doacao) return;
 
         try {
-            setCarregandoExclusao(true);
+            setStatusAcao('excluindo');
             await excluirDoacao(doacao.id);
             try {
                 navigation.reset({
                     index: 0,
-                    routes: [
-                        {
-                            name: 'Abas',
-                            params: {screen: 'Doações'},
-                        },
-                    ],
+                    routes: [{name: 'Abas', params: {screen: 'Doações'}}],
                 });
             } catch {
                 navigation.goBack();
             }
-        } catch (error) {
-            setCarregandoExclusao(false);
+        } catch {
+            setStatusAcao('idle');
             Alert.alert('Erro', 'Ocorreu um erro ao excluir a doação.');
         }
     }
@@ -71,15 +143,8 @@ export function TelaDetalheDoacao({navigation, route}: any) {
             'Excluir Doação',
             'Deseja realmente excluir esta doação? Esta ação não pode ser desfeita.',
             [
-                {
-                    text: 'Cancelar',
-                    style: 'cancel',
-                },
-                {
-                    text: 'Excluir',
-                    style: 'destructive',
-                    onPress: onConfirmExcluir,
-                },
+                {text: 'Cancelar', style: 'cancel'},
+                {text: 'Excluir', style: 'destructive', onPress: onConfirmExcluir},
             ],
             {cancelable: true}
         );
@@ -95,10 +160,10 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                         style={({pressed}) => [
                             styles.headerBotaoAcao,
                             pressed && styles.headerBotaoAcaoPressionado,
-                            carregandoEdicao && styles.headerBotaoDesabilitado,
+                            statusAcao === 'editando' && styles.headerBotaoDesabilitado,
                         ]}
-                        onPress={() => setEditarModalVisible(true)}
-                        disabled={carregandoEdicao || carregandoExclusao}
+                        onPress={() => setModalEditarVisivel(true)}
+                        disabled={estaOcupado}
                         hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
                         android_ripple={{
                             color: theme.colors.primaryLight,
@@ -108,24 +173,20 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                         accessibilityRole="button"
                         accessibilityLabel="Editar Doação"
                     >
-                        {carregandoEdicao ? (
-                            <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
+                        {statusAcao === 'editando' ? (
+                            <ActivityIndicator size="small" color={theme.colors.primaryVibrant} />
                         ) : (
-                            <MaterialDesignIcons
-                                name="pencil-outline"
-                                size={24}
-                                color={theme.colors.primaryVibrant}
-                            />
+                            <MaterialDesignIcons name="pencil-outline" size={24} color={theme.colors.primaryVibrant} />
                         )}
                     </Pressable>
                     <Pressable
-                        style={({pressed}) => [
+                        style={({ pressed }) => [
                             styles.headerBotaoAcao,
                             pressed && styles.headerBotaoAcaoPressionado,
-                            carregandoExclusao && styles.headerBotaoDesabilitado,
+                            statusAcao === 'excluindo' && styles.headerBotaoDesabilitado,
                         ]}
                         onPress={onExcluirClick}
-                        disabled={carregandoExclusao || carregandoEdicao}
+                        disabled={estaOcupado}
                         hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
                         android_ripple={{
                             color: 'rgba(247, 90, 104, 0.25)',
@@ -135,77 +196,24 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                         accessibilityRole="button"
                         accessibilityLabel="Excluir Doação"
                     >
-                        {carregandoExclusao ? (
-                            <ActivityIndicator size="small" color={theme.colors.danger}/>
+                        {statusAcao === 'excluindo' ? (
+                            <ActivityIndicator size="small" color={theme.colors.danger} />
                         ) : (
-                            <MaterialDesignIcons
-                                name="trash-can-outline"
-                                size={24}
-                                color={theme.colors.danger}
-                            />
+                            <MaterialDesignIcons name="trash-can-outline" size={24} color={theme.colors.danger} />
                         )}
                     </Pressable>
                 </View>
             ),
         });
-    }, [navigation, doacao, carregandoExclusao, carregandoEdicao]);
-
-    const pontoId = doacao?.pontoId;
-
-    const carregarPonto = useCallback(async () => {
-        if (pontoId == null) return;
-        setErro(null);
-        try {
-            const response = await buscarPontoPorId(pontoId)
-            setPonto(response)
-        } catch (erro) {
-            if (erro instanceof ApiError) {
-                setErro(erro)
-            } else {
-                setErro(new ApiError(-1, 'Ocorreu um erro ao carregar o ponto.'))
-                console.error(erro)
-            }
-        }
-    }, [pontoId])
-
-    const onRefresh = useCallback(async () => {
-        setAtualizando(true)
-        await carregarPonto();
-        setAtualizando(false)
-    }, [carregarPonto]);
-
-    useFocusEffect(
-        useCallback(() => {
-            let ativo = true
-
-            async function carregarInicial() {
-                setCarregando(true)
-                await carregarPonto();
-                if (ativo) setCarregando(false);
-            }
-
-            carregarInicial();
-
-            return () => {
-                ativo = false
-            }
-        }, [carregarPonto])
-    )
+    }, [navigation, doacao, statusAcao, estaOcupado]);
 
     if (!doacao) {
         return (
             <View style={styles.containerVazio}>
-                <MaterialDesignIcons
-                    name="alert-circle-outline"
-                    size={48}
-                    color={theme.colors.danger}
-                />
+                <MaterialDesignIcons name="alert-circle-outline" size={48} color={theme.colors.danger} />
                 <Text style={styles.textoErro}>Doação não encontrada.</Text>
                 <Pressable
-                    style={({pressed}) => [
-                        styles.botaoVoltar,
-                        pressed && styles.botaoPressionado,
-                    ]}
+                    style={({ pressed }) => [styles.botaoVoltar, pressed && styles.botaoPressionado]}
                     onPress={() => navigation.goBack()}
                 >
                     <Text style={styles.botaoVoltarTexto}>Voltar</Text>
@@ -221,15 +229,23 @@ export function TelaDetalheDoacao({navigation, route}: any) {
             style={styles.container}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+                <RefreshControl
+                    refreshing={atualizando}
+                    onRefresh={onRefresh}
+                    colors={[theme.colors.primaryVibrant]}
+                    progressBackgroundColor={theme.colors.surfaceModal}
+                    tintColor={theme.colors.primaryVibrant}
+                />
+            }
         >
             <NovaDoacaoModal
-                visible={editarModalVisible}
-                onClose={() => setEditarModalVisible(false)}
+                visible={modalEditarVisivel}
+                onClose={() => setModalEditarVisivel(false)}
                 doacaoExistente={doacao}
-                onSave={async (novaDoacao) => {
-                    await onConfirmEditar(novaDoacao);
-                }}
+                onSave={onConfirmEditar}
             />
+
             <View style={styles.conteudoCentral}>
                 <View style={styles.heroCard}>
                     <View style={styles.heroIconWrapper}>
@@ -263,121 +279,60 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                 <View style={styles.secao}>
                     <Text style={styles.secaoTitulo}>INFORMAÇÕES DA DOAÇÃO</Text>
                     <View style={styles.card}>
-                        <View style={styles.campoLinha}>
-                            <Text style={styles.campoLabel}>Item:</Text>
-                            <Text style={styles.campoValor}>{doacao.tipoItem}</Text>
-                        </View>
-
-                        <View style={styles.divisor}/>
-
-                        <View style={styles.campoLinha}>
-                            <Text style={styles.campoLabel}>Quantidade:</Text>
-                            <Text style={styles.campoValor}>
-                                {doacao.quantidade} {doacao.quantidade === 1 ? 'unidade' : 'unidades'}
-                            </Text>
-                        </View>
-
-                        <View style={styles.divisor}/>
-
-                        <View style={styles.campoLinha}>
-                            <Text style={styles.campoLabel}>Data de Registro:</Text>
-                            <Text style={styles.campoValor}>{dataFormatada}</Text>
-                        </View>
-
-                        <View style={styles.divisor}/>
-
-                        <View style={styles.campoLinha}>
-                            <Text style={styles.campoLabel}>Identificador:</Text>
-                            <Text style={styles.campoValor}>#{doacao.id}</Text>
-                        </View>
+                        <LinhaInfo label="Item:" valor={doacao.tipoItem} />
+                        <LinhaInfo label="Quantidade:" valor={`${doacao.quantidade} ${doacao.quantidade === 1 ? 'unidade' : 'unidades'}`} />
+                        <LinhaInfo label="Data de Registro:" valor={dataFormatada} />
+                        <LinhaInfo label="Identificador:" valor={`#${doacao.id}`} temDivisor={false} />
                     </View>
                 </View>
 
-                <View style={styles.secao}>
-                    <Text style={styles.secaoTitulo}>PONTO DE DESTINO</Text>
-                    <View style={styles.card}>
-                        <View style={styles.pontoCabecalho}>
-                            <MaterialDesignIcons
-                                name="map-marker"
-                                size={20}
-                                color={theme.colors.primaryVibrant}
-                            />
-                            <Text style={styles.pontoNome}>
-                                {ponto ? ponto.nome : 'Ponto não identificado'}
-                            </Text>
-                        </View>
-
-                        <Text style={styles.pontoIdTexto}>ID do Ponto: #{doacao.pontoId}</Text>
-
-                        {ponto ? (
-                            <>
-                                <View style={styles.divisor}/>
-
-                                <Text style={styles.pontoSublabel}>Endereço</Text>
-                                <Text style={styles.pontoSubvalor}>{ponto.endereco}</Text>
-
-                                <Text style={styles.pontoSublabel}>Dias e Horários</Text>
-                                <Text style={styles.pontoSubvalor}>{ponto.diasHorarios}</Text>
-
-                                {ponto.funcionamento ? (
-                                    <>
-                                        <Text style={styles.pontoSublabel}>Atendimento</Text>
-                                        <Text style={styles.pontoSubvalor}>{ponto.funcionamento}</Text>
-                                    </>
-                                ) : null}
-                            </>
-                        ) : null}
-                    </View>
-                </View>
+                <SecaoPontoDoacao
+                    ponto={ponto}
+                    erro={erro}
+                    carregando={carregandoPonto}
+                    pontoId={pontoId}
+                />
 
                 <View style={styles.secaoBotao}>
                     <Pressable
-                        style={({pressed}) => [
+                        style={({ pressed }) => [
                             styles.botaoEditar,
                             pressed && styles.botaoEditarPressionado,
-                            (carregandoEdicao || carregandoExclusao) && styles.botaoDesabilitado,
+                            estaOcupado && styles.botaoDesabilitado,
                         ]}
-                        onPress={() => setEditarModalVisible(true)}
-                        disabled={carregandoEdicao || carregandoExclusao}
+                        onPress={() => setModalEditarVisivel(true)}
+                        disabled={estaOcupado}
                         android_ripple={{color: theme.colors.primaryLight}}
                         accessibilityRole="button"
                         accessibilityLabel="Editar Doação"
                     >
-                        {carregandoEdicao ? (
-                            <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
+                        {statusAcao === 'editando' ? (
+                            <ActivityIndicator size="small" color={theme.colors.primaryVibrant} />
                         ) : (
                             <>
-                                <MaterialDesignIcons
-                                    name="pencil-outline"
-                                    size={20}
-                                    color={theme.colors.primaryVibrant}
-                                />
+                                <MaterialDesignIcons name="pencil-outline" size={20} color={theme.colors.primaryVibrant} />
                                 <Text style={styles.botaoEditarTexto}>Editar Doação</Text>
                             </>
                         )}
                     </Pressable>
 
                     <Pressable
-                        style={({pressed}) => [
+                        style={({ pressed }) => [
                             styles.botaoExcluir,
                             pressed && styles.botaoExcluirPressionado,
-                            (carregandoExclusao || carregandoEdicao) && styles.botaoDesabilitado,
+                            estaOcupado && styles.botaoDesabilitado,
                         ]}
                         onPress={onExcluirClick}
-                        disabled={carregandoExclusao || carregandoEdicao}
+                        disabled={estaOcupado}
                         android_ripple={{color: 'rgba(247, 90, 104, 0.2)'}}
                         accessibilityRole="button"
                         accessibilityLabel="Excluir Doação"
                     >
-                        {carregandoExclusao ? (
-                            <ActivityIndicator size="small" color={theme.colors.danger}/>
+                        {statusAcao === 'excluindo' ? (
+                            <ActivityIndicator size="small" color={theme.colors.danger} />
                         ) : (
                             <>
-                                <MaterialDesignIcons
-                                    name="trash-can-outline"
-                                    size={20}
-                                    color={theme.colors.danger}
-                                />
+                                <MaterialDesignIcons name="trash-can-outline" size={20} color={theme.colors.danger} />
                                 <Text style={styles.botaoExcluirTexto}>Excluir Doação</Text>
                             </>
                         )}
@@ -385,6 +340,81 @@ export function TelaDetalheDoacao({navigation, route}: any) {
                 </View>
             </View>
         </ScrollView>
+    );
+}
+
+function LinhaInfo({ label, valor, temDivisor = true }: { label: string; valor?: string | number; temDivisor?: boolean }) {
+    return (
+        <>
+            <View style={styles.campoLinha}>
+                <Text style={styles.campoLabel}>{label}</Text>
+                <Text style={styles.campoValor}>{valor}</Text>
+            </View>
+            {temDivisor && <View style={styles.divisor} />}
+        </>
+    );
+}
+
+function SecaoPontoDoacao({ponto, erro, carregando, pontoId}: any) {
+    return (
+        <View style={styles.secao}>
+            <Text style={styles.secaoTitulo}>PONTO DE DESTINO</Text>
+            <View style={styles.card}>
+                <View style={styles.pontoCabecalho}>
+                    <MaterialDesignIcons name="map-marker" size={20} color={theme.colors.primaryVibrant}/>
+                    <Text style={styles.pontoNome}>
+                        {ponto ? ponto.nome : `Ponto #${pontoId}`}
+                    </Text>
+                </View>
+
+                <Text style={styles.pontoIdTexto}>ID do Ponto: #{pontoId}</Text>
+
+                {carregando && !ponto && (
+                    <View style={styles.pontoEstadoContainer}>
+                        <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
+                        <Text style={styles.pontoEstadoTexto}>Buscando dados do ponto...</Text>
+                    </View>
+                )}
+
+                {erro && !ponto && (
+                    <View style={styles.pontoEstadoContainer}>
+                        <MaterialDesignIcons
+                            name={erro.status === 0 ? 'wifi-off' : erro.status === 404 ? 'map-marker-off-outline' : 'alert-circle-outline'}
+                            size={22}
+                            color={theme.colors.textMuted}
+                        />
+                        <View style={{flex: 1}}>
+                            <Text style={styles.pontoEstadoTitulo}>
+                                {erro.status === 0
+                                    ? 'Ponto indisponível (offline)'
+                                    : erro.status === 404
+                                        ? 'Ponto de coleta não encontrado'
+                                        : 'Não foi possível carregar os dados do ponto'}
+                            </Text>
+                            <Text style={styles.pontoEstadoSubtitulo}>
+                                {erro.status === 404
+                                    ? 'Este ponto pode ter sido removido.'
+                                    : 'Puxe a tela para baixo para tentar novamente.'}
+                            </Text>
+                        </View>
+                    </View>
+                )}
+
+                {ponto && (
+                    <>
+                        <View style={styles.divisor}/>
+                        <Text style={styles.pontoSublabel}>Endereço</Text>
+                        <Text style={styles.pontoSubvalor}>{ponto.endereco}</Text>
+
+                        <Text style={styles.pontoSublabel}>Dias e Horários</Text>
+                        <Text style={styles.pontoSubvalor}>{ponto.diasHorarios}</Text>
+
+                        <Text style={styles.pontoSublabel}>Atendimento</Text>
+                        <Text style={styles.pontoSubvalor}>{ponto.funcionamento}</Text>
+                    </>
+                )}
+            </View>
+        </View>
     );
 }
 
@@ -565,8 +595,30 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.borderSubtle,
         marginVertical: theme.spacing.md,
     },
+    pontoEstadoContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: theme.spacing.md,
+        paddingTop: theme.spacing.lg,
+        marginTop: theme.spacing.sm,
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.borderSubtle,
+    },
+    pontoEstadoTexto: {
+        fontSize: theme.fontSize.sm,
+        color: theme.colors.textMuted,
+    },
+    pontoEstadoTitulo: {
+        fontSize: theme.fontSize.sm,
+        fontWeight: '600',
+        color: theme.colors.textSecondary,
+    },
+    pontoEstadoSubtitulo: {
+        fontSize: theme.fontSize.xs,
+        color: theme.colors.textMuted,
+        marginTop: 2,
+    },
 
-    // Ponto
     pontoCabecalho: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -599,7 +651,7 @@ const styles = StyleSheet.create({
     secaoBotao: {
         marginTop: theme.spacing.md,
         marginBottom: theme.spacing['2xl'],
-        gap: theme.spacing.md, // Espaçamento consistente entre Editar e Excluir
+        gap: theme.spacing.md,
     },
     botaoEditar: {
         flexDirection: 'row',
