@@ -8,6 +8,7 @@ import {BottomBar} from "./src/components/BottomBar";
 import {TelaDetalheDoacao} from "./src/screens/TelaDetalheDoacao";
 import Toast from "react-native-toast-message";
 import {RootStackParamList} from "./src/types/navigation";
+import {toastConfig} from "./src/config/toastConfig";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -44,7 +45,8 @@ export default function App() {
             </NavigationContainer>
 
             <Toast
-                position={'bottom'}
+                config={toastConfig}
+                position='bottom'
             />
         </>
     );
