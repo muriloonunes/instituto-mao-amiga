@@ -1,17 +1,16 @@
 package com.murilo.maoamiga.controller;
 
+import com.murilo.maoamiga.entity.dto.PontoRequestDTO;
 import com.murilo.maoamiga.entity.dto.PontoResponseDTO;
 import com.murilo.maoamiga.entity.dto.PontoResumoDTO;
 import com.murilo.maoamiga.service.PontoService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,7 +21,7 @@ import java.util.List;
  * @brief Class PontoController
  */
 @RestController
-@RequestMapping("/pontos")
+@RequestMapping("/api/v1/pontos")
 public class PontoController {
     private final PontoService pontoService;
 
@@ -51,4 +50,21 @@ public class PontoController {
         return ResponseEntity.ok(pontoService.listarResumo());
     }
 
+    @PostMapping
+    public ResponseEntity<PontoResponseDTO> criarPonto(@Valid @RequestBody PontoRequestDTO request) {
+        PontoResponseDTO novoPonto = pontoService.criar(request);
+        return ResponseEntity.ok(novoPonto);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PontoResponseDTO> atualizarPonto(@PathVariable Long id, @Valid @RequestBody PontoRequestDTO request) {
+        PontoResponseDTO pontoAtualizado = pontoService.atualizar(id, request);
+        return ResponseEntity.ok(pontoAtualizado);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletarPonto(@PathVariable Long id) {
+        pontoService.deletar(id);
+        return ResponseEntity.noContent().build();
+    }
 }

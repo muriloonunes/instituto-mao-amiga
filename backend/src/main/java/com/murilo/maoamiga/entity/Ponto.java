@@ -1,7 +1,11 @@
 package com.murilo.maoamiga.entity;
 
+import com.murilo.maoamiga.entity.dto.PontoRequestDTO;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  *
@@ -12,6 +16,9 @@ import lombok.Data;
 @Entity
 @Table(name = "pontos")
 @Data
+@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class Ponto {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -24,14 +31,23 @@ public class Ponto {
     private String endereco;
 
     @Column(nullable = false)
-    private String diasHorarios;
+    private String bairro;
 
     @Column(nullable = false)
-    private String funcionamento;
+    private String horario;
 
     @Column(nullable = false)
-    private Double latitude;
+    private String tipo;
 
-    @Column(nullable = false)
-    private Double longitude;
+    public Ponto(String nome, String endereco, String bairro, String horario, String tipo) {
+        this.nome = nome;
+        this.endereco = endereco;
+        this.bairro = bairro;
+        this.horario = horario;
+        this.tipo = tipo;
+    }
+
+    public Ponto(PontoRequestDTO dto) {
+        this(dto.nome(), dto.endereco(), dto.bairro(), dto.horario(), dto.tipo());
+    }
 }

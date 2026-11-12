@@ -1,6 +1,7 @@
 package com.murilo.maoamiga.service;
 
 import com.murilo.maoamiga.entity.Ponto;
+import com.murilo.maoamiga.entity.dto.PontoRequestDTO;
 import com.murilo.maoamiga.entity.dto.PontoResponseDTO;
 import com.murilo.maoamiga.entity.dto.PontoResumoDTO;
 import com.murilo.maoamiga.exception.EntityNotFound;
@@ -25,6 +26,19 @@ public class PontoService {
         this.pontoRepository = pontoRepository;
     }
 
+    public PontoResponseDTO criar(PontoRequestDTO dto) {
+        Ponto ponto = Ponto.builder()
+                .nome(dto.nome())
+                .endereco(dto.endereco())
+                .bairro(dto.bairro())
+                .horario(dto.horario())
+                .tipo(dto.tipo())
+                .build();
+
+        Ponto novoPonto = pontoRepository.save(ponto);
+        return new PontoResponseDTO(novoPonto);
+    }
+
     public Page<PontoResponseDTO> listar(Pageable pageable) {
         Page<Ponto> pontos = pontoRepository.findAll(pageable);
         return pontos.map(PontoResponseDTO::new);
@@ -38,5 +52,25 @@ public class PontoService {
 
     public List<PontoResumoDTO> listarResumo() {
         return pontoRepository.findAllResumo();
+    }
+
+    public PontoResponseDTO atualizar(Long id, PontoRequestDTO dto) {
+        var pontoExistente = buscarPorId(id);
+
+        pontoExistente.setNome(dto.nome());
+        pontoExistente.setEndereco(dto.endereco());
+        pontoExistente.setBairro(dto.bairro());
+        pontoExistente.setHorario(dto.horario());
+        pontoExistente.setTipo(dto.tipo());
+
+        Ponto pontoAtualizado = pontoRepository.save(pontoExistente);
+        return new PontoResponseDTO(pontoAtualizado);
+    }
+
+    public void deletar(Long id) {
+        if (!pontoRepository.existsById(id)) {
+            throw new EntityNotFound("Ponto não encontrado");
+        }
+        pontoRepository.deleteById(id);
     }
 }

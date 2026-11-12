@@ -2,10 +2,9 @@ export type Ponto = {
     id: number;
     nome: string;
     endereco: string;
-    diasHorarios: string;
-    funcionamento: string;
-    latitude: number;
-    longitude: number;
+    bairro: string;
+    horario: string;
+    tipo: string;
 };
 
 export type PontoResumo = {

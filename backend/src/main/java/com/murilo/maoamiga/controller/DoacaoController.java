@@ -16,7 +16,7 @@ import java.util.List;
  * @brief Class DoacaoController
  */
 @RestController
-@RequestMapping("/doacoes")
+@RequestMapping("/api/v1/doacoes")
 public class DoacaoController {
     private final DoacaoService doacaoService;
 

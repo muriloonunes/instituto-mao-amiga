@@ -4,20 +4,22 @@ import {ApiError} from "../types/api";
 
 const getBaseUrl = (): string => {
     const hostUri = Constants.expoConfig?.hostUri;
+
+    const apiVersion = 'v1';
     if (hostUri) {
         const ip = hostUri.split(':')[0];
-        return `http://${ip}:8080`;
+        return `http://${ip}:8080/api/${apiVersion}`;
     }
 
     if (Platform.OS === 'web') {
-        return 'http://localhost:8080';
+        return `http://localhost:8080/api/${apiVersion}`;
     }
 
     if (Platform.OS === 'android') {
-        return 'http://10.0.2.2:8080';
+        return `http://10.0.2.2:8080/api/${apiVersion}`;
     }
 
-    return 'http://localhost:8080';
+    return `http://localhost:8080/api/${apiVersion}`;
 };
 
 export const BASE_URL = getBaseUrl();

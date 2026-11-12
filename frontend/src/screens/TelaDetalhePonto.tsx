@@ -119,10 +119,10 @@ function PontoDetalhe({ponto}: { ponto: Ponto }) {
             <Text style={styles.endereco}>{ponto.endereco}</Text>
 
             <Text style={styles.label}>🕒 Dias e Horários</Text>
-            <Text style={styles.diasHorarios}>{ponto.diasHorarios}</Text>
+            <Text style={styles.diasHorarios}>{ponto.horario}</Text>
 
             <Text style={styles.label}>📦 Atendimento</Text>
-            <Text style={styles.funcionamento}>{ponto.funcionamento}</Text>
+            <Text style={styles.funcionamento}>{ponto.tipo}</Text>
         </View>
     );
 }
