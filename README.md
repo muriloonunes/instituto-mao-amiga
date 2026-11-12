@@ -105,7 +105,7 @@ No terminal do Expo, escolha como deseja abrir o aplicativo:
 
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
-| `GET` | `/api/v1/pontos` | Lista os pontos cadastrados de forma paginada |
+| `GET` | `/api/v1/pontos/filtro` | Busca paginada de pontos com filtro por nome ou bairro (`?filtro=...&page=0&size=10&sort=nome,asc`) |
 | `GET` | `/api/v1/pontos/{id}` | Busca os detalhes completos de um ponto pelo ID (responde 404 se não existir) |
 | `GET` | `/api/v1/pontos/resumo` | Lista resumida (`id` e `nome`) para preenchimento de seletores |
 | `POST` | `/api/v1/pontos` | Cadastra novo ponto com validação Bean Validation (responde 400 se campo vazio) |
