@@ -49,7 +49,7 @@ A API estará disponível em: **`http://localhost:8080`**
 
 | Método | URL Completa | Descrição | Status Sucesso | Status Erros |
 | :---: | :--- | :--- | :---: | :---: |
-| `GET` | `http://localhost:8080/api/v1/pontos` | Lista os pontos de forma paginada (`?page=0&size=20`) | `200 OK` | - |
+| `GET` | `http://localhost:8080/api/v1/pontos/filtro` | Busca paginada de pontos com filtro por nome ou bairro (`?filtro=...&page=0&size=10&sort=nome,asc`) | `200 OK` | - |
 | `GET` | `http://localhost:8080/api/v1/pontos/{id}` | Busca os detalhes de um ponto específico por ID | `200 OK` | `404 Not Found` |
 | `GET` | `http://localhost:8080/api/v1/pontos/resumo` | Lista resumida (`id` e `nome`) para seletores | `200 OK` | - |
 | `POST` | `http://localhost:8080/api/v1/pontos` | Cadastra um novo ponto de coleta/distribuição | `200 OK` | `400 Bad Request` |
@@ -110,10 +110,10 @@ Retorna os detalhes completos do ponto correspondente ao ID informado.
 
 ---
 
-### 2. Listagem de Pontos (`GET /api/v1/pontos`) — Status 200 OK
-Retorna a listagem dos pontos cadastrados no banco com paginação.
+### 2. Busca Paginada sem Filtro (`GET /api/v1/pontos/filtro?page=0&size=10`) — Status 200 OK
+Retorna a listagem paginada (10 itens por página) ordenada por nome, com a estrutura serializada em `content` e `page`.
 
-![GET /api/v1/pontos](docs/swagger/2-get-pontos.png)
+![GET /api/v1/pontos/filtro sem filtro](docs/swagger/2-get-pontos-sem-filtro.png)
 
 ---
 
@@ -149,4 +149,19 @@ Demonstração do Bean Validation (`@Valid` e `@NotBlank`): ao enviar qualquer c
 Demonstração do tratamento de exceção (`EntityNotFound` via `GlobalExceptionHandler`): ao consultar ou atualizar um ID que não existe no banco, a API responde prontamente com **404 Not Found**.
 
 ![Erro 404 Not Found](docs/swagger/7-erro-404-nao-encontrado.png)
+
+---
+
+### 8. Busca com Filtro por Bairro ou Nome (`GET /api/v1/pontos/filtro?filtro=...&page=0&size=10`) — Status 200 OK
+Filtra os pontos comparando case-insensitive com nome ou bairro via query customizada no repositório.
+
+![GET /api/v1/pontos/filtro com filtro](docs/swagger/8-get-pontos-com-filtro.png)
+
+---
+
+### 9. Busca Paginada - Segunda Página (`GET /api/v1/pontos/filtro?page=1&size=10`) — Status 200 OK
+Navegação para a página subsequente (`page=1`), demonstrando a paginação e a quantidade total de registros da carga inicial (mais de 25 pontos).
+
+![GET /api/v1/pontos/filtro segunda página](docs/swagger/9-get-pontos-segunda-pagina.png)
+
 
