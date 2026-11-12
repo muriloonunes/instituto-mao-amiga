@@ -22,7 +22,7 @@ import java.util.List;
  * @brief Class PontoController
  */
 @RestController
-@RequestMapping("/pontos")
+@RequestMapping("/api/v1/pontos")
 public class PontoController {
     private final PontoService pontoService;
 
