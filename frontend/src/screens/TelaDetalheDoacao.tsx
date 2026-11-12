@@ -404,7 +404,7 @@ function SecaoPontoDoacao({ponto, erro, carregando, pontoId}: SecaoPontoDoacaoPr
                                 {erro.status === 0
                                     ? 'Ponto indisponível (offline)'
                                     : erro.status === 404
-                                        ? 'Ponto de coleta não encontrado'
+                                        ? 'Ponto não encontrado'
                                         : 'Não foi possível carregar os dados do ponto'}
                             </Text>
                             <Text style={styles.pontoEstadoSubtitulo}>

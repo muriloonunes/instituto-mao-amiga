@@ -97,7 +97,7 @@ export function TelaDetalhePonto({route}: TelaDetalhePontoProps) {
                 {erro || !ponto ? (
                     <ErroState
                         erro={erro ?? new ApiError(404, 'Ponto não encontrado')}
-                        naoEncontrado="Ponto de coleta não encontrado."
+                        naoEncontrado="Ponto não encontrado."
                         fallback="Não foi possível carregar os detalhes do ponto."
                     />
                 ) : (

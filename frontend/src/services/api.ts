@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 import {Platform} from "react-native";
-import {ApiError} from "../types/api";
+import {ApiError, Page} from "../types/api";
 
 const getBaseUrl = (): string => {
     const hostUri = Constants.expoConfig?.hostUri;
@@ -95,4 +95,8 @@ export function put<T>(endpoint: string, body?: any, options?: FetchOptions): Pr
 
 export function del<T>(endpoint: string, options?: FetchOptions): Promise<T> {
     return request<T>(endpoint, {...options, method: 'DELETE'});
+}
+
+export function ehUltimaPagina<T>(p: Page<T>): boolean {
+    return p.page.number + 1 >= p.page.totalPages;
 }
