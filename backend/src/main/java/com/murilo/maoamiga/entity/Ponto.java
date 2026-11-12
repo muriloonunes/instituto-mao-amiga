@@ -24,14 +24,11 @@ public class Ponto {
     private String endereco;
 
     @Column(nullable = false)
-    private String diasHorarios;
+    private String bairro;
 
     @Column(nullable = false)
-    private String funcionamento;
+    private String horario;
 
     @Column(nullable = false)
-    private Double latitude;
-
-    @Column(nullable = false)
-    private Double longitude;
+    private String tipo;
 }

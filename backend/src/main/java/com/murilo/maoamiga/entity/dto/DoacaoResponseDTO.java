@@ -24,8 +24,8 @@ public record DoacaoResponseDTO(
                 doacao.getPonto().getId(),
                 doacao.getPonto().getNome(),
                 doacao.getPonto().getEndereco(),
-                doacao.getPonto().getDiasHorarios(),
-                doacao.getPonto().getFuncionamento()
+                doacao.getPonto().getHorario(),
+                doacao.getPonto().getTipo()
         );
     }
 }
