@@ -4,6 +4,7 @@ import com.murilo.maoamiga.entity.dto.PontoRequestDTO;
 import com.murilo.maoamiga.entity.dto.PontoResponseDTO;
 import com.murilo.maoamiga.entity.dto.PontoResumoDTO;
 import com.murilo.maoamiga.service.PontoService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -50,9 +51,15 @@ public class PontoController {
     }
 
     @PostMapping
-    public ResponseEntity<PontoResponseDTO> criarPonto(@RequestBody PontoRequestDTO request) {
+    public ResponseEntity<PontoResponseDTO> criarPonto(@Valid @RequestBody PontoRequestDTO request) {
         PontoResponseDTO novoPonto = pontoService.criar(request);
         return ResponseEntity.ok(novoPonto);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PontoResponseDTO> atualizarPonto(@PathVariable Long id, @Valid @RequestBody PontoRequestDTO request) {
+        PontoResponseDTO pontoAtualizado = pontoService.atualizar(id, request);
+        return ResponseEntity.ok(pontoAtualizado);
     }
 
     @DeleteMapping("/{id}")

@@ -54,6 +54,19 @@ public class PontoService {
         return pontoRepository.findAllResumo();
     }
 
+    public PontoResponseDTO atualizar(Long id, PontoRequestDTO dto) {
+        var pontoExistente = buscarPorId(id);
+
+        pontoExistente.setNome(dto.nome());
+        pontoExistente.setEndereco(dto.endereco());
+        pontoExistente.setBairro(dto.bairro());
+        pontoExistente.setHorario(dto.horario());
+        pontoExistente.setTipo(dto.tipo());
+
+        Ponto pontoAtualizado = pontoRepository.save(pontoExistente);
+        return new PontoResponseDTO(pontoAtualizado);
+    }
+
     public void deletar(Long id) {
         if (!pontoRepository.existsById(id)) {
             throw new EntityNotFound("Ponto não encontrado");
