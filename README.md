@@ -8,8 +8,8 @@ Aplicação full-stack (Mobile + API REST) desenvolvida para a disciplina de **C
 
 ```text
 instituto-mao-amiga/
-├── backend/       # API REST em Java + Spring Boot (persistência em H2 Database)
-└── frontend/      # Aplicativo Mobile / Web em React Native + Expo (TypeScript)
+├── backend/       # API REST em Java + Spring Boot (veja backend/README.md para detalhes e prints)
+└── frontend/      # Aplicativo Mobile / Web em React Native + Expo (veja frontend/README.md)
 ```
 
 ---
@@ -98,24 +98,30 @@ No terminal do Expo, escolha como deseja abrir o aplicativo:
 
 ## 🔌 Endpoints da API REST
 
-### Pontos de Coleta (`/pontos`)
+> 📖 **Documentação completa e evidências de teste:**  
+> A lista de URLs completas, regras de validação e todos os **prints das respostas no Swagger UI (incluindo os cenários 400 Bad Request e 404 Not Found)** estão documentados em [**`backend/README.md`**](backend/README.md).
+
+### Pontos de Coleta (`/api/v1/pontos`)
 
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
-| `GET` | `/pontos` | Lista os pontos de coleta de forma paginada (`?page=0&size=20&sort=id,asc`, máx. 50 por página) |
-| `GET` | `/pontos/{id}` | Busca os detalhes completos de um ponto de coleta pelo seu ID |
-| `GET` | `/pontos/resumo` | Retorna uma lista resumida (`id` e `nome`) de todos os pontos para preenchimento de seletores |
+| `GET` | `/api/v1/pontos` | Lista os pontos cadastrados de forma paginada |
+| `GET` | `/api/v1/pontos/{id}` | Busca os detalhes completos de um ponto pelo ID (responde 404 se não existir) |
+| `GET` | `/api/v1/pontos/resumo` | Lista resumida (`id` e `nome`) para preenchimento de seletores |
+| `POST` | `/api/v1/pontos` | Cadastra novo ponto com validação Bean Validation (responde 400 se campo vazio) |
+| `PUT` | `/api/v1/pontos/{id}` | Atualiza dados do ponto (responde 400 se campo vazio e 404 se não existir) |
+| `DELETE` | `/api/v1/pontos/{id}` | Remove um ponto pelo ID (responde 404 se não existir) |
 
-### Doações (`/doacoes`)
+### Doações (`/api/v1/doacoes`)
 
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
-| `POST` | `/doacoes` | Registra uma nova doação (`tipoItem`, `quantidade`, `pontoId`) |
-| `GET` | `/doacoes` | Lista todas as doações cadastradas |
-| `GET` | `/doacoes/{id}` | Busca os detalhes de uma doação específica pelo ID |
-| `GET` | `/doacoes/tipo/{tipoItem}` | Filtra doações pelo tipo de item (busca parcial e case-insensitive) |
-| `PUT` | `/doacoes/{id}` | Atualiza os dados de uma doação existente |
-| `DELETE` | `/doacoes/{id}` | Remove uma doação pelo ID |
+| `POST` | `/api/v1/doacoes` | Registra uma nova doação (`tipoItem`, `quantidade`, `pontoId`) |
+| `GET` | `/api/v1/doacoes` | Lista todas as doações cadastradas |
+| `GET` | `/api/v1/doacoes/{id}` | Busca os detalhes de uma doação específica pelo ID |
+| `GET` | `/api/v1/doacoes/tipo/{tipoItem}` | Filtra doações pelo tipo de item (busca parcial e case-insensitive) |
+| `PUT` | `/api/v1/doacoes/{id}` | Atualiza os dados de uma doação existente |
+| `DELETE` | `/api/v1/doacoes/{id}` | Remove uma doação pelo ID |
 
 #### Exemplo de Payload (`POST /doacoes` e `PUT /doacoes/{id}`):
 ```json
