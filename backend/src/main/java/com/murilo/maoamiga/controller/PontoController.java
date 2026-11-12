@@ -29,15 +29,24 @@ public class PontoController {
         this.pontoService = pontoService;
     }
 
-    @GetMapping
+    @GetMapping("/filtro")
     public ResponseEntity<Page<PontoResponseDTO>> listar(
-            @PageableDefault(size = 20) Pageable pageable
+            @RequestParam(required = false) String filtro,
+            @PageableDefault(sort = "nome") Pageable pageable
     ) {
         if (pageable.getPageSize() > 50) {
             pageable = PageRequest.of(pageable.getPageNumber(), 50, pageable.getSort());
         }
 
-        return ResponseEntity.ok(pontoService.listar(pageable));
+        Page<PontoResponseDTO> pontos;
+
+        if (filtro != null && !filtro.trim().isEmpty()) {
+            pontos = pontoService.listarComFiltro(filtro, pageable);
+        } else {
+            pontos = pontoService.listar(pageable);
+        }
+
+        return ResponseEntity.ok(pontos);
     }
 
     @GetMapping("/{id}")

@@ -50,6 +50,11 @@ public class PontoService {
         );
     }
 
+    public Page<PontoResponseDTO> listarComFiltro(String filtro, Pageable pageable) {
+        Page<Ponto> pontosFiltrados = pontoRepository.listarComFiltro(filtro, pageable);
+        return pontosFiltrados.map(PontoResponseDTO::new);
+    }
+
     public List<PontoResumoDTO> listarResumo() {
         return pontoRepository.findAllResumo();
     }
