@@ -39,4 +39,11 @@ public class PontoService {
     public List<PontoResumoDTO> listarResumo() {
         return pontoRepository.findAllResumo();
     }
+
+    public void deletar(Long id) {
+        if (!pontoRepository.existsById(id)) {
+            throw new EntityNotFound("Ponto não encontrado");
+        }
+        pontoRepository.deleteById(id);
+    }
 }
