@@ -92,13 +92,12 @@ public class DataLoader {
     }
 
     private Ponto criarPonto(String nome, String endereco, String bairro, String horario, String tipo) {
-        var ponto = new Ponto();
-        ponto.setNome(nome);
-        ponto.setEndereco(endereco);
-        ponto.setBairro(bairro);
-        ponto.setHorario(horario);
-        ponto.setTipo(tipo);
-
-        return ponto;
+        return new Ponto(
+                nome,
+                endereco,
+                bairro,
+                horario,
+                tipo
+        );
     }
 }

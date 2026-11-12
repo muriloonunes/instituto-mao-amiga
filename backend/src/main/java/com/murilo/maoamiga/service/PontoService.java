@@ -1,6 +1,7 @@
 package com.murilo.maoamiga.service;
 
 import com.murilo.maoamiga.entity.Ponto;
+import com.murilo.maoamiga.entity.dto.PontoRequestDTO;
 import com.murilo.maoamiga.entity.dto.PontoResponseDTO;
 import com.murilo.maoamiga.entity.dto.PontoResumoDTO;
 import com.murilo.maoamiga.exception.EntityNotFound;
@@ -23,6 +24,19 @@ public class PontoService {
 
     public PontoService(PontoRepository pontoRepository) {
         this.pontoRepository = pontoRepository;
+    }
+
+    public PontoResponseDTO criar(PontoRequestDTO dto) {
+        Ponto ponto = Ponto.builder()
+                .nome(dto.nome())
+                .endereco(dto.endereco())
+                .bairro(dto.bairro())
+                .horario(dto.horario())
+                .tipo(dto.tipo())
+                .build();
+
+        Ponto novoPonto = pontoRepository.save(ponto);
+        return new PontoResponseDTO(novoPonto);
     }
 
     public Page<PontoResponseDTO> listar(Pageable pageable) {

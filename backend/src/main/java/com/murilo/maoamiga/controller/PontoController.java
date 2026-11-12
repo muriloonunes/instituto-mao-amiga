@@ -1,5 +1,6 @@
 package com.murilo.maoamiga.controller;
 
+import com.murilo.maoamiga.entity.dto.PontoRequestDTO;
 import com.murilo.maoamiga.entity.dto.PontoResponseDTO;
 import com.murilo.maoamiga.entity.dto.PontoResumoDTO;
 import com.murilo.maoamiga.service.PontoService;
@@ -46,6 +47,12 @@ public class PontoController {
     @GetMapping("/resumo")
     public ResponseEntity<List<PontoResumoDTO>> listarResumo() {
         return ResponseEntity.ok(pontoService.listarResumo());
+    }
+
+    @PostMapping
+    public ResponseEntity<PontoResponseDTO> criarPonto(@RequestBody PontoRequestDTO request) {
+        PontoResponseDTO novoPonto = pontoService.criar(request);
+        return ResponseEntity.ok(novoPonto);
     }
 
     @DeleteMapping("/{id}")
