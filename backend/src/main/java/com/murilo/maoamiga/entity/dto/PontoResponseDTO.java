@@ -7,8 +7,8 @@ public record PontoResponseDTO(
         String nome,
         String endereco,
         String bairro,
-        String diasHorarios,
-        String funcionamento
+        String horario,
+        String tipo
 ) {
     public PontoResponseDTO(Ponto ponto) {
         this(

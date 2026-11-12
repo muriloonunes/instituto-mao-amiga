@@ -7,8 +7,8 @@ export function CardItem({ponto, onPress}: { ponto: Ponto; onPress: () => void }
         <TouchableOpacity style={styles.card} activeOpacity={0.75} onPress={onPress}>
             <Text style={styles.nome}>{ponto.nome}</Text>
             <Text style={styles.endereco}>📍 {ponto.endereco}</Text>
-            <Text style={styles.diasHorarios}>🕒 {ponto.diasHorarios}</Text>
-            <Text style={styles.funcionamento}>{ponto.funcionamento}</Text>
+            <Text style={styles.diasHorarios}>🕒 {ponto.horario}</Text>
+            <Text style={styles.funcionamento}>{ponto.tipo}</Text>
         </TouchableOpacity>
     );
 }

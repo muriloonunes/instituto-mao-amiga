@@ -423,10 +423,10 @@ function SecaoPontoDoacao({ponto, erro, carregando, pontoId}: SecaoPontoDoacaoPr
                         <Text style={styles.pontoSubvalor}>{ponto.endereco}</Text>
 
                         <Text style={styles.pontoSublabel}>Dias e Horários</Text>
-                        <Text style={styles.pontoSubvalor}>{ponto.diasHorarios}</Text>
+                        <Text style={styles.pontoSubvalor}>{ponto.horario}</Text>
 
                         <Text style={styles.pontoSublabel}>Atendimento</Text>
-                        <Text style={styles.pontoSubvalor}>{ponto.funcionamento}</Text>
+                        <Text style={styles.pontoSubvalor}>{ponto.tipo}</Text>
                     </>
                 )}
             </View>
