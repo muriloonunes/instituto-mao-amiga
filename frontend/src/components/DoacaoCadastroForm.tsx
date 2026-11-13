@@ -115,7 +115,6 @@ export const DoacaoCadastroForm = forwardRef<DoacaoFormHandle, DoacaoCadastroFor
             <ScrollView
                 style={{flexGrow: 1}}
                 contentContainerStyle={styles.formScrollContainer}
-                showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
                 <View style={styles.formGroup}>
@@ -220,7 +219,6 @@ export const DoacaoCadastroForm = forwardRef<DoacaoFormHandle, DoacaoCadastroFor
                                 <Picker.Item
                                     label="Selecione um ponto"
                                     value={null}
-                                    enabled={false}
                                     color={theme.colors.placeholder}
                                     style={{fontSize: theme.fontSize.sm}}
                                 />

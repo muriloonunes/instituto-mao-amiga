@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
 import {TelaListaPontos} from "../screens/TelaListaPontos";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
-import {TelaDoacoes} from "../screens/TelaDoacoes";
+import {TelaListaDoacoes} from "../screens/TelaListaDoacoes";
 import {Platform, StyleSheet, useWindowDimensions, View, ViewStyle} from "react-native";
 import {theme} from "../theme/theme";
 import {BlurView} from "expo-blur";
@@ -191,7 +191,10 @@ export function BottomBar() {
                         tabBarLabel: "Pontos",
                     }}
                 >
-                    {() => <TelaListaPontos atualizacaoKey={atualizacaoPontosKey}/>}
+                    {() => <TelaListaPontos
+                        onNovoPonto={() => setModalVisible(true)}
+                        atualizacaoKey={atualizacaoPontosKey}
+                    />}
                 </Tab.Screen>
                 {!telaLarga && (
                     <Tab.Screen
@@ -226,7 +229,7 @@ export function BottomBar() {
                         tabBarLabel: "Doações",
                     }}
                 >
-                    {() => <TelaDoacoes
+                    {() => <TelaListaDoacoes
                         onNovaDoacao={() => setModalVisible(true)}
                         atualizacaoKey={atualizacaoDoacaoKey}
                     />

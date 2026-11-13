@@ -28,7 +28,12 @@ import {ehUltimaPagina} from "../services/api";
 
 const TAMANHO_PAGINA = 10;
 
-export function TelaListaPontos({atualizacaoKey}: { atualizacaoKey: number }) {
+type TelaListaPontosProps = {
+    onNovoPonto?: () => void;
+    atualizacaoKey: number;
+}
+
+export function TelaListaPontos({onNovoPonto, atualizacaoKey}: TelaListaPontosProps) {
     const navigation = useNavigation<any>();
     const {width} = useWindowDimensions();
     const telaLarga = width >= 768;
@@ -187,7 +192,9 @@ export function TelaListaPontos({atualizacaoKey}: { atualizacaoKey: number }) {
                 <EmptyState
                     icon={<Empty width={300} height={250}/>}
                     mensagem="Nenhum ponto de coleta cadastrado"
-                    subtitulo="Puxe para baixo para verificar novamente."
+                    subtitulo="Puxe para baixo para verificar novamente ou utilize o botão para adicionar um."
+                    botaoTexto={"Adicionar ponto"}
+                    onBotaoPress={onNovoPonto}
                 />
             );
         }

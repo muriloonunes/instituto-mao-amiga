@@ -1,4 +1,15 @@
-import {KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View} from "react-native";
+import {
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View
+} from "react-native";
 import {theme} from "../theme/theme";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import React, {useEffect, useRef, useState} from "react";
@@ -6,13 +17,15 @@ import {Doacao} from "../types/doacao";
 import {DoacaoCadastroForm, DoacaoFormHandle} from "./DoacaoCadastroForm";
 import {PontoCadastroForm, PontoFormHandle} from "./PontoCadastroForm";
 import {Ponto, PontoCadastro} from "../types/ponto";
+import Toast from "react-native-toast-message";
+import {getMensagemErro} from "../utils/erros";
 
 type ModalCadastroProps = {
     visible: boolean;
     onClose: () => void;
     abaAberta: 'Pontos' | 'Doações';
-    onSavePonto: (ponto: PontoCadastro) => void;
-    onSaveDoacao: (doacao: Doacao) => void;
+    onSavePonto?: (ponto: PontoCadastro) => Promise<void> | void;
+    onSaveDoacao?: (doacao: Doacao) => Promise<void> | void;
     doacaoExistente?: Doacao;
     pontoExistente?: Ponto;
 };
@@ -22,17 +35,26 @@ export function ModalCadastro(
 ) {
     const [abaSelecionada, setAbaSelecionada] = useState<'Pontos' | 'Doações'>(abaAberta)
     const [carregandoForm, setCarregandoForm] = useState(false);
+    const [salvando, setSalvando] = useState(false);
+    const [erroSalvar, setErroSalvar] = useState<string | null>(null);
 
     const doacaoFormRef = useRef<DoacaoFormHandle>(null);
     const pontoFormRef = useRef<PontoFormHandle>(null);
 
+    const {width} = useWindowDimensions();
+    const telaLarga = width >= 768;
+    const paddingInferior = (telaLarga ? theme.spacing['3xl'] : 65);
+
     useEffect(() => {
         if (visible) {
             setAbaSelecionada(abaAberta);
+            setSalvando(false);
+            setErroSalvar(null);
         }
     }, [visible, abaAberta]);
 
     function handleSalvar() {
+        if (salvando) return;
         if (abaSelecionada === 'Pontos') {
             pontoFormRef.current?.submit();
         } else if (abaSelecionada === 'Doações') {
@@ -40,7 +62,47 @@ export function ModalCadastro(
         }
     }
 
-    const isEdicao = !!doacaoExistente;
+    async function handleSalvarPonto(ponto: PontoCadastro) {
+        try {
+            setSalvando(true);
+            setErroSalvar(null);
+            await onSavePonto?.(ponto);
+            onClose();
+            if (!pontoExistente) {
+                Toast.show({
+                    type: 'success',
+                    text1: 'Ponto cadastrado com sucesso.',
+                    bottomOffset: paddingInferior + 25
+                })
+            }
+        } catch (error) {
+            setErroSalvar(getMensagemErro(error, {fallback: 'Não foi possível cadastrar o ponto.'}));
+        } finally {
+            setSalvando(false);
+        }
+    }
+
+    async function handleSalvarDoacao(doacao: Doacao) {
+        try {
+            setSalvando(true);
+            setErroSalvar(null);
+            await onSaveDoacao?.(doacao);
+            onClose();
+            if (!doacaoExistente) {
+                Toast.show({
+                    type: 'success',
+                    text1: 'Doação cadastrada com sucesso.',
+                    bottomOffset: paddingInferior + 25
+                })
+            }
+        } catch (error) {
+            setErroSalvar(getMensagemErro(error, {fallback: 'Não foi possível salvar a doação.'}));
+        } finally {
+            setSalvando(false);
+        }
+    }
+
+    const isEdicao = !!doacaoExistente || !!pontoExistente;
     let titulo = '';
 
     if (abaSelecionada === 'Pontos') {
@@ -48,6 +110,8 @@ export function ModalCadastro(
     } else if (abaSelecionada === 'Doações') {
         titulo = doacaoExistente ? 'Editar Doação' : 'Registrar Nova Doação';
     }
+
+    const desabilitarSalvar = carregandoForm || salvando;
 
     return (
         <Modal
@@ -92,7 +156,10 @@ export function ModalCadastro(
                                     styles.tabButton,
                                     abaSelecionada === 'Pontos' && styles.tabButtonActive
                                 ]}
-                                onPress={() => setAbaSelecionada('Pontos')}
+                                onPress={() => {
+                                    setAbaSelecionada('Pontos')
+                                    setErroSalvar(null);
+                                }}
                             >
                                 <MaterialDesignIcons
                                     name="map-marker-outline"
@@ -114,7 +181,10 @@ export function ModalCadastro(
                                     styles.tabButton,
                                     abaSelecionada === 'Doações' && styles.tabButtonActive
                                 ]}
-                                onPress={() => setAbaSelecionada('Doações')}
+                                onPress={() => {
+                                    setAbaSelecionada('Doações')
+                                    setErroSalvar(null);
+                                }}
                             >
                                 <MaterialDesignIcons
                                     name="hand-heart-outline"
@@ -136,10 +206,8 @@ export function ModalCadastro(
                     <View style={styles.modalBody}>
                         {abaSelecionada === 'Pontos' ? (
                             <PontoCadastroForm
-                                onSave={(ponto) => {
-                                    onSavePonto(ponto)
-                                    onClose();
-                                }}
+                                pontoExistente={pontoExistente}
+                                onSave={handleSalvarPonto}
                                 ref={pontoFormRef}
                             />
                         ) : (
@@ -147,13 +215,17 @@ export function ModalCadastro(
                                 ref={doacaoFormRef}
                                 doacaoExistente={doacaoExistente}
                                 onCarregandoChange={setCarregandoForm}
-                                onSave={(doacao) => {
-                                    onSaveDoacao(doacao);
-                                    onClose();
-                                }}
+                                onSave={handleSalvarDoacao}
                             />
                         )}
                     </View>
+
+                    {erroSalvar && (
+                        <View style={styles.alertaErroModal}>
+                            <MaterialDesignIcons name="alert-circle-outline" size={18} color={theme.colors.danger}/>
+                            <Text style={styles.alertaErroTexto}>{erroSalvar}</Text>
+                        </View>
+                    )}
 
                     <View style={styles.modalFooter}>
                         <Pressable
@@ -170,16 +242,22 @@ export function ModalCadastro(
                             style={({pressed}) => [
                                 styles.buttonSave,
                                 {opacity: pressed ? 0.8 : 1},
-                                carregandoForm && {opacity: 0.6}
+                                desabilitarSalvar && {opacity: 0.6}
                             ]}
-                            disabled={carregandoForm}
+                            disabled={desabilitarSalvar}
                             accessibilityRole="button"
-                            accessibilityLabel="Salvar doação"
-                            accessibilityState={{disabled: carregandoForm}}
+                            accessibilityLabel={abaSelecionada === 'Pontos' ? "Salvar ponto" : "Salvar doação"}
+                            accessibilityState={{disabled: desabilitarSalvar}}
                             onPress={handleSalvar}
                         >
-                            <MaterialDesignIcons name="check" size={18} color={theme.colors.textWhite}/>
-                            <Text style={styles.buttonSaveText}>Salvar</Text>
+                            {salvando ? (
+                                <ActivityIndicator size="small" color={theme.colors.textWhite}/>
+                            ) : (
+                                <>
+                                    <MaterialDesignIcons name="check" size={18} color={theme.colors.textWhite}/>
+                                    <Text style={styles.buttonSaveText}>Salvar</Text>
+                                </>
+                            )}
                         </Pressable>
                     </View>
                 </View>
@@ -284,6 +362,25 @@ const styles = StyleSheet.create({
     },
     modalBody: {
         flexShrink: 1,
+    },
+    alertaErroModal: {
+        flexShrink: 0,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: theme.colors.dangerLight,
+        borderColor: theme.colors.danger,
+        borderWidth: 1,
+        borderRadius: theme.borderRadius.md,
+        paddingHorizontal: theme.spacing.md,
+        paddingVertical: 8,
+        marginTop: theme.spacing.md,
+    },
+    alertaErroTexto: {
+        flex: 1,
+        color: theme.colors.danger,
+        fontSize: theme.fontSize.sm,
+        fontWeight: '500',
     },
     modalFooter: {
         flexShrink: 0,
