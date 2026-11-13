@@ -6,10 +6,12 @@ import {TelaDoacoes} from "../screens/TelaDoacoes";
 import {Platform, StyleSheet, useWindowDimensions, View, ViewStyle} from "react-native";
 import {theme} from "../theme/theme";
 import {BlurView} from "expo-blur";
-import {NovaDoacaoModal} from "./NovaDoacaoModal";
+import {ModalCadastro} from "./ModalCadastro";
 import {salvarDoacao} from "../services/doacoesStorage";
 import {Doacao} from "../types/doacao";
 import {BottomBarFab} from "./BottomBarFab";
+import {PontoCadastro} from "../types/ponto";
+import {criarPonto} from "../services/pontosService";
 
 const Tab = createBottomTabNavigator();
 
@@ -76,15 +78,27 @@ function getTabBarStyle(telaLarga: boolean): ViewStyle {
 
 export function BottomBar() {
     const dimensions = useWindowDimensions();
-    const [atualizacaoKey, setAtualizacaoKey] = useState(0);
+    const [atualizacaoDoacaoKey, setAtualizacaoDoacaoKey] = useState(0);
+    const [atualizacaoPontosKey, setAtualizacaoPontosKey] = useState(0);
     const [modalVisible, setModalVisible] = useState(false);
 
     const telaLarga = dimensions.width >= 768;
+
+    const [abaAtiva, setAbaAtiva] = useState<'Pontos' | 'Doações'>('Pontos');
 
     return (
         <View style={styles.rootContainer}>
             <Tab.Navigator
                 initialRouteName="Pontos"
+                screenListeners={{
+                    state: (e) => {
+                        const state = e.data.state;
+                        const rotaAtual = state.routes[state.index]?.name;
+                        if (rotaAtual === 'Pontos' || rotaAtual === 'Doações') {
+                            setAbaAtiva(rotaAtual);
+                        }
+                    }
+                }}
                 screenOptions={({route}) => ({
                     headerShown: false,
                     tabBarPosition: dimensions.width >= 768 ? 'left' : 'bottom',
@@ -159,6 +173,7 @@ export function BottomBar() {
                                     {...props}
                                     onPress={() => setModalVisible(true)}
                                     telaLarga={telaLarga}
+                                    abaAtiva={abaAtiva}
                                 />
                             ),
                         }}
@@ -172,11 +187,12 @@ export function BottomBar() {
                 )}
                 <Tab.Screen
                     name={"Pontos"}
-                    component={TelaListaPontos}
                     options={{
                         tabBarLabel: "Pontos",
                     }}
-                />
+                >
+                    {() => <TelaListaPontos atualizacaoKey={atualizacaoPontosKey}/>}
+                </Tab.Screen>
                 {!telaLarga && (
                     <Tab.Screen
                         name={"NovaDoacao"}
@@ -192,6 +208,7 @@ export function BottomBar() {
                                     {...props}
                                     onPress={() => setModalVisible(true)}
                                     telaLarga={telaLarga}
+                                    abaAtiva={abaAtiva}
                                 />
                             ),
                         }}
@@ -211,18 +228,23 @@ export function BottomBar() {
                 >
                     {() => <TelaDoacoes
                         onNovaDoacao={() => setModalVisible(true)}
-                        atualizacaoKey={atualizacaoKey}
+                        atualizacaoKey={atualizacaoDoacaoKey}
                     />
                     }
                 </Tab.Screen>
             </Tab.Navigator>
 
-            <NovaDoacaoModal
+            <ModalCadastro
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
-                onSave={async (doacao: Doacao) => {
+                abaAberta={abaAtiva}
+                onSaveDoacao={async (doacao: Doacao) => {
                     await salvarDoacao(doacao);
-                    setAtualizacaoKey(prev => prev + 1);
+                    setAtualizacaoDoacaoKey(prev => prev + 1);
+                }}
+                onSavePonto={async (ponto: PontoCadastro) => {
+                    await criarPonto(ponto);
+                    setAtualizacaoPontosKey(prev => prev + 1);
                 }}
             />
         </View>

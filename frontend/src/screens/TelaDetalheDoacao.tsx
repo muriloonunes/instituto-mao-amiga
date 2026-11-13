@@ -14,7 +14,7 @@ import MaterialDesignIcons from '@react-native-vector-icons/material-design-icon
 import {theme} from '../theme/theme';
 import {Doacao} from '../types/doacao';
 import {atualizarDoacao, excluirDoacao} from '../services/doacoesStorage';
-import {NovaDoacaoModal} from "../components/NovaDoacaoModal";
+import {ModalCadastro} from "../components/ModalCadastro";
 import {ApiError} from "../types/api";
 import {buscarPontoPorId} from "../services/pontosService";
 import {useFocusEffect} from "@react-navigation/native";
@@ -253,11 +253,13 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
                 />
             }
         >
-            <NovaDoacaoModal
+            <ModalCadastro
                 visible={modalEditarVisivel}
+                abaAberta={'Doações'}
                 onClose={() => setModalEditarVisivel(false)}
                 doacaoExistente={doacao}
-                onSave={onConfirmEditar}
+                onSaveDoacao={onConfirmEditar}
+                onSavePonto={() => {}}
             />
 
             <View style={styles.conteudoCentral}>

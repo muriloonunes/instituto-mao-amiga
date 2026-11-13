@@ -1,13 +1,22 @@
-import {Platform, Pressable, StyleSheet, View, Text} from "react-native";
+import {Platform, Pressable, StyleSheet, Text, View} from "react-native";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import {theme} from "../theme/theme";
 
-export function BottomBarFab({onPress, telaLarga}: {
+export function BottomBarFab({onPress, telaLarga, abaAtiva}: {
     onPress?: () => void;
     telaLarga: boolean;
+    abaAtiva: string;
 }) {
     const isAndroid = Platform.OS === 'android';
     const isIOS = Platform.OS === 'ios';
+
+    let accessibilityLabel;
+
+    if (abaAtiva === 'Pontos') {
+        accessibilityLabel = 'Registrar Novo Ponto';
+    } else {
+        accessibilityLabel = 'Registrar Nova Doação';
+    }
 
     return (
         <View
@@ -20,7 +29,7 @@ export function BottomBarFab({onPress, telaLarga}: {
             <Pressable
                 onPress={onPress}
                 accessibilityRole="button"
-                accessibilityLabel="Registrar Nova Doação"
+                accessibilityLabel={accessibilityLabel}
                 hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
                 style={({pressed, hovered}: any) => [
                     styles.fabButton,
@@ -34,7 +43,7 @@ export function BottomBarFab({onPress, telaLarga}: {
                 <MaterialDesignIcons name="plus" color={theme.colors.textWhite} size={28}/>
             </Pressable>
             {telaLarga && (
-                <Text style={styles.fabRailLabel}>Doar</Text>
+                <Text style={styles.fabRailLabel}>Novo</Text>
             )}
         </View>
     );

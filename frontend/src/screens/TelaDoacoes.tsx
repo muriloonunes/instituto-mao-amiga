@@ -128,7 +128,7 @@ export function TelaDoacoes({onNovaDoacao, atualizacaoKey}: TelaDoacoesProps) {
             let ativo = true;
 
             async function carregarInicial() {
-                setCarregando(true);
+                setAtualizando(true);
                 await carregarDados();
                 if (ativo) setCarregando(false);
             }

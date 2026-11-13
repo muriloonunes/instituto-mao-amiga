@@ -14,7 +14,7 @@ import {SafeAreaView} from "react-native-safe-area-context";
 import {CardItem} from "../components/CardItem";
 import {theme} from "../theme/theme";
 import {InputPesquisar} from "../components/InputPesquisar";
-import {useFocusEffect} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {Ponto} from "../types/ponto";
 import {listarPontos} from "../services/pontosService";
 import {ApiError} from "../types/api";
@@ -28,7 +28,8 @@ import {ehUltimaPagina} from "../services/api";
 
 const TAMANHO_PAGINA = 10;
 
-export function TelaListaPontos({navigation}: any) {
+export function TelaListaPontos({atualizacaoKey}: { atualizacaoKey: number }) {
+    const navigation = useNavigation<any>();
     const {width} = useWindowDimensions();
     const telaLarga = width >= 768;
     const paddingInferior = telaLarga ? theme.spacing['3xl'] : 65;
@@ -96,6 +97,14 @@ export function TelaListaPontos({navigation}: any) {
             }
         }
     }, [paddingInferior]);
+
+    useEffect(() => {
+        if (atualizacaoKey && atualizacaoKey > 0) {
+            setBusca('');
+            setErro(null);
+            carregarPontos(0, '', true);
+        }
+    }, [atualizacaoKey, carregarPontos])
 
     useEffect(() => {
         if (primeiraMontagemRef.current) {
