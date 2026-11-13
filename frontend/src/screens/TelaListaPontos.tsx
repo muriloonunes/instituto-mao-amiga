@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
     ActivityIndicator,
     FlatList,
@@ -14,7 +14,7 @@ import {SafeAreaView} from "react-native-safe-area-context";
 import {CardItem} from "../components/CardItem";
 import {theme} from "../theme/theme";
 import {InputPesquisar} from "../components/InputPesquisar";
-import {useFocusEffect} from "@react-navigation/native";
+import {useFocusEffect, useNavigation} from "@react-navigation/native";
 import {Ponto} from "../types/ponto";
 import {listarPontos} from "../services/pontosService";
 import {ApiError} from "../types/api";
@@ -24,77 +24,148 @@ import NoResult from '../../assets/svg/no-result.svg'
 import Toast from "react-native-toast-message";
 import {getMensagemErro} from "../utils/erros";
 import {ErroState} from "../components/ErroState";
+import {ehUltimaPagina} from "../services/api";
 
-export function TelaListaPontos({navigation}: any) {
+const TAMANHO_PAGINA = 10;
+
+type TelaListaPontosProps = {
+    onNovoPonto?: () => void;
+    atualizacaoKey: number;
+}
+
+export function TelaListaPontos({onNovoPonto, atualizacaoKey}: TelaListaPontosProps) {
+    const navigation = useNavigation<any>();
     const {width} = useWindowDimensions();
     const telaLarga = width >= 768;
-
     const paddingInferior = telaLarga ? theme.spacing['3xl'] : 65;
 
-    const [pontos, setPontos] = useState<Ponto[]>([])
+    const [pontos, setPontos] = useState<Ponto[]>([]);
     const [carregando, setCarregando] = useState(true);
+    const [carregandoMais, setCarregandoMais] = useState(false);
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState<ApiError | null>(null);
 
+    const [pagina, setPagina] = useState(0);
+    const [ultima, setUltima] = useState(false);
     const [busca, setBusca] = useState('');
-    const pontosFiltrados = useMemo(() => {
-        const termo = busca.trim().toLowerCase();
-        if (!termo) return pontos;
-        return pontos.filter(ponto => ponto.nome?.toLowerCase().includes(termo) ?? false);
-    }, [pontos, busca]);
 
-    const carregarDados = useCallback(async (isRefresh = false) => {
-        if (!isRefresh) setErro(null);
+    const buscandoMaisRef = useRef(false);
+    const requestSeqRef = useRef(0);
+    const primeiraMontagemRef = useRef(true);
+    const buscaRef = useRef('');
+    const temPontosRef = useRef(false);
+
+    useEffect(() => {
+        buscaRef.current = busca;
+        temPontosRef.current = pontos.length > 0;
+    }, [busca, pontos]);
+
+    const carregarPontos = useCallback(async (
+        paginaAlvo: number,
+        termoBusca: string,
+        resetar: boolean = false
+    ) => {
+        const requestId = ++requestSeqRef.current;
+
+        if (resetar && !temPontosRef.current) {
+            setCarregando(true);
+        }
 
         try {
-            const response = await listarPontos(0, 20);
-            setPontos(response.content);
+            const response = await listarPontos(termoBusca.trim() || undefined, paginaAlvo, TAMANHO_PAGINA);
+
+            if (requestId !== requestSeqRef.current) return;
+
+            setPontos(prev => resetar ? response.content : [...prev, ...response.content]);
+            setPagina(response.page.number);
+            setUltima(ehUltimaPagina(response));
             setErro(null);
         } catch (err) {
+            if (requestId !== requestSeqRef.current) return;
+
             console.error(err);
             const apiError = err instanceof ApiError ? err : new ApiError(-1, 'Erro desconhecido');
 
-            if (isRefresh && pontos.length > 0) {
+            if (!resetar && paginaAlvo > 0) {
                 Toast.show({
                     type: 'error',
-                    text1: getMensagemErro(err, {
-                        fallback: 'Ocorreu um erro ao carregar os pontos. Tente novamente mais tarde.'
-                    }),
+                    text1: getMensagemErro(err, {fallback: 'Não foi possível carregar mais pontos.'}),
                     position: 'bottom',
                     bottomOffset: paddingInferior + 25
                 });
             } else {
                 setErro(apiError);
             }
+        } finally {
+            if (requestId === requestSeqRef.current) {
+                setCarregando(false);
+            }
         }
-    }, [pontos.length]);
+    }, [paddingInferior]);
+
+    useEffect(() => {
+        if (atualizacaoKey && atualizacaoKey > 0) {
+            setBusca('');
+            setErro(null);
+            carregarPontos(0, '', true);
+        }
+    }, [atualizacaoKey, carregarPontos])
+
+    useEffect(() => {
+        if (primeiraMontagemRef.current) {
+            primeiraMontagemRef.current = false;
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setErro(null);
+            await carregarPontos(0, busca, true);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [busca, carregarPontos]);
+
+    useFocusEffect(
+        useCallback(() => {
+            if (!buscaRef.current.trim()) {
+                setErro(null);
+                carregarPontos(0, '', true);
+            }
+        }, [carregarPontos])
+    );
 
     const onRefresh = useCallback(async () => {
         setAtualizando(true);
         try {
-            await carregarDados(true);
+            await carregarPontos(0, busca, true);
         } finally {
             setAtualizando(false);
         }
-    }, [carregarDados]);
+    }, [busca, carregarPontos]);
 
-    useFocusEffect(
-        useCallback(() => {
-            let ativo = true;
+    const carregarProximaPagina = useCallback(async () => {
+        if (buscandoMaisRef.current || carregandoMais || carregando || atualizando || ultima || erro) {
+            return;
+        }
 
-            async function carregarInicial() {
-                setCarregando(true);
-                await carregarDados(false);
-                if (ativo) setCarregando(false);
-            }
+        buscandoMaisRef.current = true;
+        setCarregandoMais(true);
+        try {
+            await carregarPontos(pagina + 1, busca, false);
+        } finally {
+            setCarregandoMais(false);
+            buscandoMaisRef.current = false;
+        }
+    }, [carregandoMais, carregando, atualizando, ultima, erro, pagina, busca, carregarPontos]);
 
-            carregarInicial();
-
-            return () => {
-                ativo = false;
-            };
-        }, [carregarDados])
-    );
+    const renderFooter = () => {
+        if (!carregandoMais) return null;
+        return (
+            <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
+            </View>
+        );
+    };
 
     const renderEmptyComponent = () => {
         if (erro) {
@@ -121,7 +192,9 @@ export function TelaListaPontos({navigation}: any) {
                 <EmptyState
                     icon={<Empty width={300} height={250}/>}
                     mensagem="Nenhum ponto de coleta cadastrado"
-                    subtitulo="Puxe para baixo para verificar novamente."
+                    subtitulo="Puxe para baixo para verificar novamente ou utilize o botão para adicionar um."
+                    botaoTexto={"Adicionar ponto"}
+                    onBotaoPress={onNovoPonto}
                 />
             );
         }
@@ -132,30 +205,32 @@ export function TelaListaPontos({navigation}: any) {
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleText}>Pontos de Coleta</Text>
-            {carregando ? (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
-                </View>
-            ) : (
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    style={styles.keyboardContainer}
-                >
-                    {(pontos.length > 0) &&
-                        <InputPesquisar placeholder="Buscar pontos" busca={busca} setBusca={setBusca}/>}
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={styles.keyboardContainer}
+            >
+                <InputPesquisar placeholder="Buscar pontos" busca={busca} setBusca={setBusca}/>
 
+                {carregando && pontos.length === 0 ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
+                    </View>
+                ) : (
                     <FlatList
-                        data={pontosFiltrados}
+                        data={pontos}
                         keyExtractor={(item) => item.id.toString()}
                         keyboardShouldPersistTaps="handled"
                         keyboardDismissMode="on-drag"
+                        ListEmptyComponent={renderEmptyComponent}
+                        ListFooterComponent={renderFooter}
+                        onEndReached={carregarProximaPagina}
+                        onEndReachedThreshold={0.5}
                         renderItem={({item}) => (
                             <CardItem
                                 ponto={item}
                                 onPress={() => navigation.navigate('TelaDetalhePonto', {pontoId: item.id})}
                             />
                         )}
-                        ListEmptyComponent={renderEmptyComponent}
                         refreshControl={
                             <RefreshControl
                                 refreshing={atualizando}
@@ -167,12 +242,12 @@ export function TelaListaPontos({navigation}: any) {
                         }
                         contentContainerStyle={[
                             styles.listaContainer,
-                            pontosFiltrados.length === 0 && styles.listaVaziaContainer,
+                            pontos.length === 0 && styles.listaVaziaContainer,
                             {paddingBottom: paddingInferior}
                         ]}
                     />
-                </KeyboardAvoidingView>
-            )}
+                )}
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -202,5 +277,10 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    footerLoader: {
+        paddingVertical: theme.spacing.lg,
+        alignItems: 'center',
+        justifyContent: 'center',
     }
 });

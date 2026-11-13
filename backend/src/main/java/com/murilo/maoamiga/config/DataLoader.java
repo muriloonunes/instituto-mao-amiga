@@ -33,21 +33,21 @@ public class DataLoader {
                                 "Rua 44, 399",
                                 "Centro",
                                 "Todos os dias: 08:30 às 22:00",
-                                "Coleta e Distribuição"
+                                "Distribui"
                         ),
                         criarPonto(
                                 "Mercado Municipal de Campinas",
                                 "Rua 10, s/n",
                                 "Setor Campinas",
                                 "Seg. a Sáb.: 07:00 às 18:00\nDomingo: 07:00 às 12:00",
-                                "Coleta"
+                                "Distribui"
                         ),
                         criarPonto(
                                 "Praça Universitária",
                                 "Av. Universitária, s/n",
                                 "Setor Leste Universitário",
                                 "Todos os dias, aberto 24h",
-                                "Coleta e Distribuição"
+                                "Coleta"
                         ),
                         criarPonto(
                                 "Shopping Cerrado",
@@ -89,14 +89,14 @@ public class DataLoader {
                                 "Praça da Bíblia / Av. 2ª Radial",
                                 "Setor Pedro Ludovico",
                                 "Todos os dias: 05:00 às 23:30",
-                                "Coleta e Distribuição"
+                                "Distribui"
                         ),
                         criarPonto(
                                 "Academia WeGYM",
                                 "Rodovia Transbrasiliana",
                                 "Vila Redenção",
                                 "Todos os dias, aberto 24h",
-                                "Coleta e Distribuição"
+                                "Coleta"
                         ),
                         criarPonto(
                                 "Flamboyant Shopping Center",
@@ -110,7 +110,7 @@ public class DataLoader {
                                 "Av. do Cerrado, 999",
                                 "Park Lozandes",
                                 "Segunda a Sexta das 08:00 às 18:00",
-                                "Coleta e Distribuição"
+                                "Distribui"
                         ),
                         criarPonto(
                                 "Sesc Faiçalville",
@@ -124,7 +124,7 @@ public class DataLoader {
                                 "Av. Nero Macedo, 400",
                                 "Cidade Jardim",
                                 "Seg. a Sáb.: 10:00 às 22:00\nDomingo: 14:00 às 20:00",
-                                "Coleta"
+                                "Distribui"
                         ),
                         criarPonto(
                                 "Plaza D'Oro Shopping",
@@ -152,7 +152,7 @@ public class DataLoader {
                                 "Av. Anhanguera, s/n",
                                 "Bairro Ipiranga",
                                 "Todos os dias: 04:30 às 00:00",
-                                "Coleta e Distribuição"
+                                "Distribui"
                         ),
                         criarPonto(
                                 "América Shopping",
@@ -173,7 +173,7 @@ public class DataLoader {
                                 "Av. Anhanguera, 14527",
                                 "Setor Santos Dumont",
                                 "Todos os dias, aberto 24h",
-                                "Coleta"
+                                "Distribui"
                         ),
                         criarPonto(
                                 "Supermercado Bretas Perimetral",
@@ -194,28 +194,28 @@ public class DataLoader {
                                 "Av. das Indústrias, 75",
                                 "Santa Genoveva",
                                 "Segunda a Sábado das 07:00 às 18:00",
-                                "Coleta"
+                                "Distribui"
                         ),
                         criarPonto(
                                 "Ecoponto Jardim Guanabara",
                                 "Rua GB-5 com Rua GB-6",
                                 "Jardim Guanabara II",
                                 "Todos os dias: 07:00 às 22:00",
-                                "Coleta e Distribuição"
+                                "Distribui"
                         ),
                         criarPonto(
                                 "Campus Samambaia - UFG",
                                 "Alameda Palmeiras, s/n",
                                 "Chácaras Califórnia",
                                 "Segunda a Sexta das 07:00 às 22:00",
-                                "Coleta"
+                                "Distribui"
                         ),
                         criarPonto(
                                 "Ecoponto Jardim São José",
                                 "Rua Frei Nazareno Confaloni",
                                 "Jardim São José",
                                 "Todos os dias: 07:00 às 19:00",
-                                "Coleta e Distribuição"
+                                "Distribui"
                         )
                 );
 

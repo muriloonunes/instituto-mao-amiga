@@ -1,17 +1,39 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {Ponto} from "../types/ponto";
-import {theme} from "../theme/theme";
-import {buscarPontoPorId} from "../services/pontosService";
-import {ApiError} from "../types/api";
-import Toast from "react-native-toast-message";
-import {getMensagemErro} from "../utils/erros";
-import {ErroState} from "../components/ErroState";
-import {TelaDetalhePontoProps} from "../types/navigation";
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Platform,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
+} from 'react-native';
+import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
+import {Ponto, PontoCadastro} from '../types/ponto';
+import {theme} from '../theme/theme';
+import {atualizarPonto, buscarPontoPorId, deletarPonto} from '../services/pontosService';
+import {ApiError} from '../types/api';
+import Toast from 'react-native-toast-message';
+import {getMensagemErro} from '../utils/erros';
+import {ErroState} from '../components/ErroState';
+import {TelaDetalhePontoProps} from '../types/navigation';
+import {ModalCadastro} from "../components/ModalCadastro";
+import {StatusAcao} from "../types/utils";
 
-export function TelaDetalhePonto({route}: TelaDetalhePontoProps) {
+export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
     const {pontoId} = route.params;
-    const [ponto, setPonto] = useState<Ponto | null>(null);
+    const {width} = useWindowDimensions();
+    const telaLarga = width >= 768;
+    const paddingInferior = telaLarga ? theme.spacing['3xl'] : 40;
+
+    const [modalEditarVisivel, setModalEditarVisivel] = useState(false);
+    const [statusAcao, setStatusAcao] = useState<StatusAcao>('idle');
+    const estaOcupado = statusAcao !== 'idle';
+
+    const [ponto, setPonto] = useState<Ponto | undefined>(undefined);
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState<ApiError | null>(null);
@@ -34,7 +56,7 @@ export function TelaDetalhePonto({route}: TelaDetalhePontoProps) {
                     type: 'error',
                     text1: getMensagemErro(err, {
                         naoEncontrado: 'Ponto não encontrado.',
-                        fallback: 'Não foi possível atualizar os detalhes do ponto.'
+                        fallback: 'Não foi possível atualizar os detalhes do ponto.',
                     }),
                     position: 'bottom',
                 });
@@ -44,7 +66,7 @@ export function TelaDetalhePonto({route}: TelaDetalhePontoProps) {
         } finally {
             setAtualizando(false);
         }
-    }, [carregarPonto, ponto]);
+    }, [carregarPonto, ponto, paddingInferior]);
 
     useEffect(() => {
         let ativo = true;
@@ -68,6 +90,117 @@ export function TelaDetalhePonto({route}: TelaDetalhePontoProps) {
         };
     }, [carregarPonto]);
 
+    function onExcluirClick() {
+        Alert.alert(
+            'Excluir Ponto',
+            'Deseja realmente excluir este ponto? Esta ação não pode ser desfeita.',
+            [
+                {text: 'Cancelar', style: 'cancel'},
+                {text: 'Excluir', style: 'destructive', onPress: onConfirmExcluir},
+            ],
+            {cancelable: true}
+        );
+    }
+
+    async function onConfirmEditar(novoPonto: PontoCadastro) {
+        if (!novoPonto || !ponto) return;
+
+        try {
+            setStatusAcao('editando')
+            const pontoApi = await atualizarPonto(ponto.id, novoPonto)
+            setPonto(pontoApi)
+            navigation.setParams({pontoId: pontoApi.id})
+            Toast.show({
+                type: "success",
+                text1: 'Ponto atualizado com sucesso.'
+            })
+        } catch (error) {
+            throw error;
+        } finally {
+            setStatusAcao('idle')
+        }
+    }
+
+    async function onConfirmExcluir() {
+        if (!ponto) return;
+
+        try {
+            setStatusAcao('excluindo')
+            await deletarPonto(ponto.id)
+            Toast.show({
+                type: "success",
+                text1: 'Ponto excluído com sucesso.',
+                bottomOffset: paddingInferior + 25
+            })
+            try {
+                navigation.reset({
+                    index: 0,
+                    routes: [{name: 'Abas', params: {screen: 'Pontos'}}],
+                })
+            } catch (error) {
+                navigation.goBack()
+            }
+        } catch (error) {
+            setStatusAcao('idle')
+            Toast.show({
+                type: "error",
+                text1: getMensagemErro(error, {fallback: 'Ocorreu um erro ao excluir o ponto.'}),
+            })
+        }
+    }
+
+    useLayoutEffect(() => {
+        if (ponto) {
+            navigation.setOptions({
+                headerRight: () => (
+                    <View style={styles.headerAcoes}>
+                        <Pressable
+                            style={({pressed}) => [
+                                styles.headerBotaoAcao,
+                                pressed && styles.headerBotaoAcaoPressionado,
+                                statusAcao === 'editando' && styles.headerBotaoDesabilitado,
+                            ]}
+                            onPress={() => setModalEditarVisivel(true)}
+                            disabled={estaOcupado}
+                            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                            android_ripple={{
+                                color: theme.colors.primaryLight,
+                                borderless: true,
+                                radius: 20,
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel="Editar Ponto"
+                        >
+                            <MaterialDesignIcons name="pencil-outline" size={24} color={theme.colors.primaryVibrant}/>
+                        </Pressable>
+                        <Pressable
+                            style={({pressed}) => [
+                                styles.headerBotaoAcao,
+                                pressed && styles.headerBotaoAcaoPressionado,
+                                statusAcao === 'excluindo' && styles.headerBotaoDesabilitado,
+                            ]}
+                            onPress={onExcluirClick}
+                            disabled={estaOcupado}
+                            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                            android_ripple={{
+                                color: 'rgba(247, 90, 104, 0.25)',
+                                borderless: true,
+                                radius: 20,
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel="Excluir Ponto"
+                        >
+                            {statusAcao === 'excluindo' ? (
+                                <ActivityIndicator size="small" color={theme.colors.danger}/>
+                            ) : (
+                                <MaterialDesignIcons name="trash-can-outline" size={24} color={theme.colors.danger}/>
+                            )}
+                        </Pressable>
+                    </View>
+                ),
+            });
+        }
+    }, [navigation, ponto]);
 
     if (carregando) {
         return (
@@ -76,6 +209,13 @@ export function TelaDetalhePonto({route}: TelaDetalhePontoProps) {
             </View>
         );
     }
+
+    const isDistribui = (ponto?.tipo || '').toLowerCase().includes('distribui');
+    const badgeLabel = isDistribui ? "Distribui" : "Coleta";
+    const badgeIcon: any = isDistribui ? "truck-delivery-outline" : "inbox-arrow-down";
+    const badgeStyle = isDistribui ? styles.badgeDistribui : styles.badgeColeta;
+    const badgeTextStyle = isDistribui ? styles.badgeDistribuiTexto : styles.badgeColetaTexto;
+    const badgeIconColor = isDistribui ? '#38bdf8' : '#2dd4bf';
 
     return (
         <View style={styles.container}>
@@ -91,39 +231,150 @@ export function TelaDetalhePonto({route}: TelaDetalhePontoProps) {
                 }
                 contentContainerStyle={[
                     styles.detalheScroll,
-                    (erro || !ponto) && styles.scrollVazio
+                    {paddingBottom: paddingInferior},
+                    (erro || !ponto) && styles.scrollVazio,
                 ]}
             >
+                <ModalCadastro
+                    visible={modalEditarVisivel}
+                    abaAberta={'Pontos'}
+                    onClose={() => setModalEditarVisivel(false)}
+                    onSavePonto={onConfirmEditar}
+                    pontoExistente={ponto}
+                />
                 {erro || !ponto ? (
                     <ErroState
                         erro={erro ?? new ApiError(404, 'Ponto não encontrado')}
-                        naoEncontrado="Ponto de coleta não encontrado."
+                        naoEncontrado="Ponto não encontrado."
                         fallback="Não foi possível carregar os detalhes do ponto."
                     />
                 ) : (
-                    <PontoDetalhe ponto={ponto}/>
+                    <View style={styles.conteudoCentral}>
+                        <View style={styles.heroCard}>
+                            <View style={styles.heroIconWrapper}>
+                                <MaterialDesignIcons
+                                    name="map-marker-radius"
+                                    size={36}
+                                    color={theme.colors.primaryVibrant}
+                                />
+                            </View>
+
+                            <Text style={styles.heroNome}>{ponto.nome}</Text>
+
+                            <View style={styles.heroBadges}>
+                                <View style={[styles.badgeTipo, badgeStyle]}>
+                                    <MaterialDesignIcons
+                                        name={badgeIcon}
+                                        size={14}
+                                        color={badgeIconColor}
+                                    />
+                                    <Text style={[styles.badgeTipoTexto, badgeTextStyle]}>
+                                        {badgeLabel}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.secao}>
+                            <Text style={styles.secaoTitulo}>LOCALIZAÇÃO</Text>
+                            <View style={styles.card}>
+                                <LinhaInfo label="Endereço:" valor={ponto.endereco} icone="map-marker-outline"/>
+                                <LinhaInfo label="Bairro:" valor={ponto.bairro || 'Não informado'}
+                                           icone="city-variant-outline" temDivisor={false}/>
+                            </View>
+                        </View>
+
+                        <View style={styles.secao}>
+                            <Text style={styles.secaoTitulo}>FUNCIONAMENTO</Text>
+                            <View style={styles.card}>
+                                <LinhaInfo label="Dias e Horários:" valor={ponto.horario} icone="clock-outline"/>
+                                <LinhaInfo
+                                    label="Atividade do Ponto:"
+                                    valor={
+                                        isDistribui
+                                            ? "Ponto de Distribuição (Entrega de mantimentos para famílias)"
+                                            : "Ponto de Coleta (Recebe doações de itens da comunidade)"
+                                    }
+                                    icone="information-outline"
+                                    temDivisor={false}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.secaoBotao}>
+                            <Pressable
+                                style={({pressed}) => [
+                                    styles.botaoEditar,
+                                    pressed && styles.botaoEditarPressionado,
+                                    estaOcupado && styles.botaoDesabilitado,
+                                ]}
+                                onPress={() => setModalEditarVisivel(true)}
+                                disabled={estaOcupado}
+                                android_ripple={{color: theme.colors.primaryLight}}
+                                accessibilityRole="button"
+                                accessibilityLabel="Editar Ponto"
+                            >
+                                {statusAcao === 'editando' ? (
+                                    <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
+                                ) : (
+                                    <>
+                                        <MaterialDesignIcons name="pencil-outline" size={20}
+                                                             color={theme.colors.primaryVibrant}/>
+                                        <Text style={styles.botaoEditarTexto}>Editar Ponto</Text>
+                                    </>
+                                )}
+                            </Pressable>
+
+                            <Pressable
+                                style={({pressed}) => [
+                                    styles.botaoExcluir,
+                                    pressed && styles.botaoExcluirPressionado,
+                                    estaOcupado && styles.botaoDesabilitado,
+                                ]}
+                                onPress={onExcluirClick}
+                                disabled={estaOcupado}
+                                android_ripple={{color: 'rgba(247, 90, 104, 0.2)'}}
+                                accessibilityRole="button"
+                                accessibilityLabel="Excluir Ponto"
+                            >
+                                {statusAcao === 'excluindo' ? (
+                                    <ActivityIndicator size="small" color={theme.colors.danger}/>
+                                ) : (
+                                    <>
+                                        <MaterialDesignIcons name="trash-can-outline" size={20}
+                                                             color={theme.colors.danger}/>
+                                        <Text style={styles.botaoExcluirTexto}>Excluir Ponto</Text>
+                                    </>
+                                )}
+                            </Pressable>
+                        </View>
+                    </View>
                 )}
             </ScrollView>
         </View>
     );
 }
 
-function PontoDetalhe({ponto}: { ponto: Ponto }) {
+function LinhaInfo({label, valor, icone, temDivisor = true}: {
+    label: string;
+    valor: string;
+    icone?: any;
+    temDivisor?: boolean;
+}) {
     return (
-        <View style={styles.cardDetalhe}>
-            <Text style={styles.nome}>{ponto.nome}</Text>
-
-            <View style={styles.divisor}/>
-
-            <Text style={styles.label}>📍 Endereço</Text>
-            <Text style={styles.endereco}>{ponto.endereco}</Text>
-
-            <Text style={styles.label}>🕒 Dias e Horários</Text>
-            <Text style={styles.diasHorarios}>{ponto.horario}</Text>
-
-            <Text style={styles.label}>📦 Atendimento</Text>
-            <Text style={styles.funcionamento}>{ponto.tipo}</Text>
-        </View>
+        <>
+            <View style={styles.linhaInfo}>
+                {icone && (
+                    <MaterialDesignIcons name={icone} size={18} color={theme.colors.primaryVibrant}
+                                         style={{marginTop: 2}}/>
+                )}
+                <View style={styles.linhaConteudo}>
+                    <Text style={styles.linhaLabel}>{label}</Text>
+                    <Text style={styles.linhaValor}>{valor}</Text>
+                </View>
+            </View>
+            {temDivisor && <View style={styles.divisor}/>}
+        </>
     );
 }
 
@@ -144,47 +395,175 @@ const styles = StyleSheet.create({
     },
     detalheScroll: {
         padding: theme.spacing['2xl'],
-        paddingBottom: theme.spacing['3xl'],
     },
-    cardDetalhe: {
+    conteudoCentral: {
+        width: '100%',
+        maxWidth: 600,
+        alignSelf: 'center',
+    },
+    headerAcoes: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: theme.spacing.xs,
+        marginRight: Platform.OS === 'ios' ? -4 : 4,
+    },
+    headerBotaoAcao: {
+        padding: theme.spacing.sm,
+        borderRadius: theme.borderRadius.full,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    headerBotaoAcaoPressionado: {
+        opacity: 0.6,
+    },
+    headerBotaoDesabilitado: {
+        opacity: 0.4,
+    },
+    heroCard: {
         backgroundColor: theme.colors.cardBackground,
         borderRadius: theme.borderRadius.xl,
-        padding: theme.spacing['2xl'],
         borderWidth: 1,
         borderColor: theme.colors.cardBorder,
-        width: '100%',
+        padding: theme.spacing['2xl'],
+        alignItems: 'center',
+        marginBottom: theme.spacing['2xl'],
     },
-    nome: {
+    heroIconWrapper: {
+        width: 68,
+        height: 68,
+        borderRadius: 34,
+        backgroundColor: theme.colors.iconSurface,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: theme.spacing.lg,
+    },
+    heroNome: {
         fontSize: theme.fontSize['3xl'],
         fontWeight: 'bold',
         color: theme.colors.textWhite,
+        textAlign: 'center',
         marginBottom: theme.spacing.md,
+    },
+    heroBadges: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    badgeTipo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: theme.spacing.md,
+        paddingVertical: theme.spacing.xs,
+        borderRadius: theme.borderRadius.full,
+    },
+    badgeColeta: {
+        backgroundColor: 'rgba(45, 212, 191, 0.14)',
+    },
+    badgeDistribui: {
+        backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    },
+    badgeTipoTexto: {
+        fontSize: theme.fontSize.sm,
+        fontWeight: '700',
+    },
+    badgeColetaTexto: {
+        color: '#2dd4bf',
+    },
+    badgeDistribuiTexto: {
+        color: '#38bdf8',
+    },
+    secao: {
+        marginBottom: theme.spacing['2xl'],
+    },
+    secaoTitulo: {
+        fontSize: theme.fontSize.xs,
+        fontWeight: '700',
+        color: theme.colors.textMuted,
+        letterSpacing: 0.8,
+        marginBottom: theme.spacing.md,
+        paddingHorizontal: theme.spacing.xs,
+    },
+    card: {
+        backgroundColor: theme.colors.cardBackground,
+        borderRadius: theme.borderRadius.xl,
+        borderWidth: 1,
+        borderColor: theme.colors.cardBorder,
+        padding: theme.spacing['2xl'],
+    },
+    linhaInfo: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: theme.spacing.md,
+        paddingVertical: theme.spacing.xs,
+    },
+    linhaConteudo: {
+        flex: 1,
+    },
+    linhaLabel: {
+        fontSize: theme.fontSize.xs,
+        color: theme.colors.textMuted,
+        marginBottom: 2,
+    },
+    linhaValor: {
+        fontSize: theme.fontSize.md,
+        color: theme.colors.textWhite,
+        fontWeight: '500',
+        lineHeight: 20,
     },
     divisor: {
         height: 1,
         backgroundColor: theme.colors.borderSubtle,
+        marginVertical: theme.spacing.md,
     },
-    label: {
-        fontSize: theme.fontSize.md,
+    secaoBotao: {
+        marginTop: theme.spacing.md,
+        marginBottom: theme.spacing['2xl'],
+        gap: theme.spacing.md,
+    },
+    botaoDesabilitado: {
+        opacity: 0.6,
+    },
+    botaoEditar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        minHeight: 50,
+        backgroundColor: theme.colors.surfaceElevated,
+        borderWidth: 1,
+        borderColor: theme.colors.borderMedium,
+        borderRadius: theme.borderRadius.xl,
+        paddingHorizontal: theme.spacing['2xl'],
+    },
+    botaoEditarPressionado: {
+        opacity: Platform.OS === 'ios' ? 0.75 : 1,
+        backgroundColor: theme.colors.surfaceHover,
+    },
+    botaoEditarTexto: {
+        fontSize: theme.fontSize.lg,
         fontWeight: 'bold',
         color: theme.colors.primaryVibrant,
-        marginTop: theme.spacing.xl,
-        marginBottom: theme.spacing.xs,
     },
-    endereco: {
+    botaoExcluir: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        minHeight: 50,
+        backgroundColor: theme.colors.dangerLight,
+        borderWidth: 1,
+        borderColor: 'rgba(247, 90, 104, 0.3)',
+        borderRadius: theme.borderRadius.xl,
+        paddingHorizontal: theme.spacing['2xl'],
+    },
+    botaoExcluirPressionado: {
+        opacity: Platform.OS === 'ios' ? 0.75 : 1,
+        backgroundColor: 'rgba(247, 90, 104, 0.25)',
+    },
+    botaoExcluirTexto: {
         fontSize: theme.fontSize.lg,
-        color: theme.colors.textSecondary,
-        lineHeight: 22,
-    },
-    diasHorarios: {
-        fontSize: theme.fontSize.md,
-        color: theme.colors.textMuted,
-        lineHeight: 20,
-    },
-    funcionamento: {
-        fontSize: theme.fontSize.sm,
-        fontWeight: '600',
-        color: theme.colors.text,
-        lineHeight: 18,
+        fontWeight: 'bold',
+        color: theme.colors.danger,
     },
 });

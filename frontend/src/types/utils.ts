@@ -1,0 +1,1 @@
+export type StatusAcao = 'idle' | 'editando' | 'excluindo'

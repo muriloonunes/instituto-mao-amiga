@@ -14,7 +14,7 @@ import MaterialDesignIcons from '@react-native-vector-icons/material-design-icon
 import {theme} from '../theme/theme';
 import {Doacao} from '../types/doacao';
 import {atualizarDoacao, excluirDoacao} from '../services/doacoesStorage';
-import {NovaDoacaoModal} from "../components/NovaDoacaoModal";
+import {ModalCadastro} from "../components/ModalCadastro";
 import {ApiError} from "../types/api";
 import {buscarPontoPorId} from "../services/pontosService";
 import {useFocusEffect} from "@react-navigation/native";
@@ -22,6 +22,7 @@ import {Ponto} from "../types/ponto";
 import Toast from "react-native-toast-message";
 import {getMensagemErro} from "../utils/erros";
 import {TelaDetalheDoacaoProps} from "../types/navigation";
+import {StatusAcao} from "../types/utils";
 
 interface SecaoPontoDoacaoProps {
     ponto: Ponto | null;
@@ -44,7 +45,7 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
     const [modalEditarVisivel, setModalEditarVisivel] = useState(false);
     const [atualizando, setAtualizando] = useState(false);
     const [carregandoPonto, setCarregandoPonto] = useState(true);
-    const [statusAcao, setStatusAcao] = useState<'idle' | 'editando' | 'excluindo'>('idle');
+    const [statusAcao, setStatusAcao] = useState<StatusAcao>('idle');
 
     const estaOcupado = statusAcao !== 'idle';
     const pontoId = doacao?.pontoId;
@@ -148,7 +149,10 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
             }
         } catch {
             setStatusAcao('idle');
-            Alert.alert('Erro', 'Ocorreu um erro ao excluir a doação.');
+            Toast.show({
+                type: "error",
+                text1: 'Ocorreu um erro ao excluir a doação.'
+            })
         }
     }
 
@@ -253,11 +257,12 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
                 />
             }
         >
-            <NovaDoacaoModal
+            <ModalCadastro
                 visible={modalEditarVisivel}
+                abaAberta={'Doações'}
                 onClose={() => setModalEditarVisivel(false)}
                 doacaoExistente={doacao}
-                onSave={onConfirmEditar}
+                onSaveDoacao={onConfirmEditar}
             />
 
             <View style={styles.conteudoCentral}>
@@ -404,7 +409,7 @@ function SecaoPontoDoacao({ponto, erro, carregando, pontoId}: SecaoPontoDoacaoPr
                                 {erro.status === 0
                                     ? 'Ponto indisponível (offline)'
                                     : erro.status === 404
-                                        ? 'Ponto de coleta não encontrado'
+                                        ? 'Ponto não encontrado'
                                         : 'Não foi possível carregar os dados do ponto'}
                             </Text>
                             <Text style={styles.pontoEstadoSubtitulo}>

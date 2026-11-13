@@ -26,7 +26,7 @@ import {ApiError} from "../types/api";
 import Toast from "react-native-toast-message";
 import {getMensagemErro} from "../utils/erros";
 
-type TelaDoacoesProps = {
+type TelaListaDoacoesProps = {
     onNovaDoacao?: () => void;
     atualizacaoKey?: number;
 };
@@ -37,7 +37,7 @@ export type ResumoDoacoes = {
     quantidadeDoacoes: number;
 };
 
-export function TelaDoacoes({onNovaDoacao, atualizacaoKey}: TelaDoacoesProps) {
+export function TelaListaDoacoes({onNovaDoacao, atualizacaoKey}: TelaListaDoacoesProps) {
     const navigation = useNavigation<any>();
     const {width} = useWindowDimensions();
     const telaLarga = width >= 768;
@@ -128,7 +128,7 @@ export function TelaDoacoes({onNovaDoacao, atualizacaoKey}: TelaDoacoesProps) {
             let ativo = true;
 
             async function carregarInicial() {
-                setCarregando(true);
+                setAtualizando(true);
                 await carregarDados();
                 if (ativo) setCarregando(false);
             }

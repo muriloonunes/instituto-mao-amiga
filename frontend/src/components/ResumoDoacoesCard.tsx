@@ -2,7 +2,7 @@ import {Pressable, View, Text, StyleSheet, Platform, ScrollView} from "react-nat
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import {theme} from "../theme/theme";
 import {useState} from "react";
-import {ResumoDoacoes} from "../screens/TelaDoacoes";
+import {ResumoDoacoes} from "../screens/TelaListaDoacoes";
 
 export function ResumoDoacoesCard({resumoDoacoes, totalDoacoes, totalItens}:{resumoDoacoes: ResumoDoacoes[], totalDoacoes: number, totalItens: number}) {
     const [resumoExpandido, setResumoExpandido] = useState(true);

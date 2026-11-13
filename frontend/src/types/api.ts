@@ -10,8 +10,10 @@ export class ApiError extends Error {
 
 export interface Page<T> {
     content: T[];
-    last: boolean;
-    number: number;
-    totalPages: number;
-    totalElements: number;
+    page: {
+        size: number;
+        number: number;
+        totalElements: number;
+        totalPages: number;
+    };
 }

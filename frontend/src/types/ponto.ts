@@ -11,3 +11,5 @@ export type PontoResumo = {
     id: number;
     nome: string;
 }
+
+export type PontoCadastro = Omit<Ponto, 'id'>;
