@@ -116,12 +116,11 @@ No terminal do Expo, escolha como deseja abrir o aplicativo:
 
 | Método | Endpoint | Descrição |
 | :--- | :--- | :--- |
-| `POST` | `/api/v1/doacoes` | Registra uma nova doação (`tipoItem`, `quantidade`, `pontoId`) |
-| `GET` | `/api/v1/doacoes` | Lista todas as doações cadastradas |
-| `GET` | `/api/v1/doacoes/{id}` | Busca os detalhes de uma doação específica pelo ID |
-| `GET` | `/api/v1/doacoes/tipo/{tipoItem}` | Filtra doações pelo tipo de item (busca parcial e case-insensitive) |
-| `PUT` | `/api/v1/doacoes/{id}` | Atualiza os dados de uma doação existente |
-| `DELETE` | `/api/v1/doacoes/{id}` | Remove uma doação pelo ID |
+| `GET` | `/api/v1/doacoes/filtro` | Busca paginada filtrando por tipo de item (`?filtro=...&page=0&size=10&sort=criadoEm,desc`) |
+| `GET` | `/api/v1/doacoes/{id}` | Busca os detalhes de uma doação por ID |
+| `POST` | `/api/v1/doacoes` | Registra uma nova doação com validação Bean Validation |
+| `PUT` | `/api/v1/doacoes/{id}` | Atualiza uma doação existente |
+| `DELETE` | `/api/v1/doacoes/{id}` | Remove uma doação por ID |
 
 #### Exemplo de Payload (`POST /doacoes` e `PUT /doacoes/{id}`):
 ```json

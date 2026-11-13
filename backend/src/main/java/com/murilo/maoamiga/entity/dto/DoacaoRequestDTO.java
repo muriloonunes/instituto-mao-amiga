@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
-public record CriarDoacaoDTO(
+public record DoacaoRequestDTO(
         @NotBlank(message = "O tipo do item é obrigatório")
         @Size(max = 50, message = "O tipo do item deve ter no máximo 50 caracteres")
         String tipoItem,
