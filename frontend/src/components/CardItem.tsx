@@ -1,15 +1,85 @@
+import React from "react";
 import {Ponto} from "../types/ponto";
-import {StyleSheet, TouchableOpacity, Text} from "react-native";
+import {Pressable, StyleSheet, Text, View} from "react-native";
 import {theme} from "../theme/theme";
+import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 
 export function CardItem({ponto, onPress}: { ponto: Ponto; onPress: () => void }) {
+    const enderecoCompleto = ponto.bairro
+        ? `${ponto.endereco} • ${ponto.bairro}`
+        : ponto.endereco;
+
+    const tipoLower = (ponto.tipo || '').toLowerCase();
+    const isAmbos = tipoLower.includes('coleta') && tipoLower.includes('distribui');
+    const isDistribuiApenas = !isAmbos && tipoLower.includes('distribui');
+
+    let badgeLabel: string;
+    let badgeStyle: any = styles.badgeRecebe;
+    let badgeTextStyle: any = styles.badgeRecebeTexto;
+
+    if (isAmbos) {
+        badgeLabel = "Coleta & Distribui";
+        badgeStyle = styles.badgeAmbos;
+        badgeTextStyle = styles.badgeAmbosTexto;
+    } else if (isDistribuiApenas) {
+        badgeLabel = "Distribui";
+        badgeStyle = styles.badgeDistribui;
+        badgeTextStyle = styles.badgeDistribuiTexto;
+    } else {
+        badgeLabel = "Coleta";
+    }
+
     return (
-        <TouchableOpacity style={styles.card} activeOpacity={0.75} onPress={onPress}>
-            <Text style={styles.nome}>{ponto.nome}</Text>
-            <Text style={styles.endereco}>📍 {ponto.endereco}</Text>
-            <Text style={styles.diasHorarios}>🕒 {ponto.horario}</Text>
-            <Text style={styles.funcionamento}>{ponto.tipo}</Text>
-        </TouchableOpacity>
+        <Pressable
+            style={({pressed}) => [styles.card, pressed && styles.cardPressed]}
+            onPress={onPress}
+        >
+            <View style={styles.header}>
+                <View style={styles.pontoInfo}>
+                    <View style={styles.iconWrapper}>
+                        <MaterialDesignIcons
+                            name="map-marker"
+                            size={18}
+                            color={theme.colors.primaryVibrant}
+                        />
+                    </View>
+                    <Text style={styles.nome} numberOfLines={1}>
+                        {ponto.nome}
+                    </Text>
+                </View>
+                <View style={[styles.badgeTipo, badgeStyle]}>
+                    <Text style={[styles.badgeTipoTexto, badgeTextStyle]}>
+                        {badgeLabel}
+                    </Text>
+                </View>
+            </View>
+
+            <View style={styles.divisor}/>
+
+            <View style={styles.footer}>
+                <View style={styles.metaRow}>
+                    <MaterialDesignIcons
+                        name="map-marker-outline"
+                        size={15}
+                        color={theme.colors.textMuted}
+                    />
+                    <Text style={styles.metaText} numberOfLines={1}>
+                        {enderecoCompleto}
+                    </Text>
+                </View>
+
+                <View style={styles.metaRow}>
+                    <MaterialDesignIcons
+                        name="clock-outline"
+                        size={15}
+                        color={theme.colors.textMuted}
+                    />
+                    <Text style={styles.metaText} numberOfLines={1}>
+                        {ponto.horario}
+                    </Text>
+                </View>
+            </View>
+        </Pressable>
     );
 }
 
@@ -17,32 +87,84 @@ const styles = StyleSheet.create({
     card: {
         backgroundColor: theme.colors.cardBackground,
         borderRadius: theme.borderRadius.xl,
-        padding: theme.spacing['2xl'],
-        marginBottom: theme.spacing['2xl'],
         borderWidth: 1,
         borderColor: theme.colors.cardBorder,
+        padding: theme.spacing['2xl'],
+        marginBottom: theme.spacing['2xl'],
+    },
+    cardPressed: {
+        opacity: 0.85,
+        transform: [{scale: 0.99}],
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: theme.spacing.md,
+    },
+    pontoInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: theme.spacing.md,
+        flex: 1,
+    },
+    iconWrapper: {
+        width: 32,
+        height: 32,
+        borderRadius: theme.borderRadius.md,
+        backgroundColor: theme.colors.iconSurface,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     nome: {
         fontSize: theme.fontSize['2xl'],
         fontWeight: 'bold',
         color: theme.colors.textWhite,
-        marginBottom: theme.spacing.md,
+        flex: 1,
     },
-    endereco: {
-        fontSize: theme.fontSize.md,
-        color: theme.colors.textSecondary,
-        marginBottom: theme.spacing.sm,
-        lineHeight: 20,
+    badgeTipo: {
+        paddingHorizontal: theme.spacing.md,
+        paddingVertical: 3,
+        borderRadius: theme.borderRadius.full,
     },
-    diasHorarios: {
-        fontSize: theme.fontSize.sm,
-        color: theme.colors.textMuted,
-        marginBottom: theme.spacing.sm,
-        lineHeight: 18,
+    badgeRecebe: {
+        backgroundColor: theme.colors.primaryLight,
     },
-    funcionamento: {
-        fontSize: theme.fontSize.xs,
-        fontWeight: '600',
+    badgeDistribui: {
+        backgroundColor: 'rgba(251, 169, 76, 0.15)',
+    },
+    badgeAmbos: {
+        backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    },
+    badgeTipoTexto: {
+        fontSize: 11,
+        fontWeight: '700',
+    },
+    badgeRecebeTexto: {
         color: theme.colors.primaryVibrant,
+    },
+    badgeDistribuiTexto: {
+        color: theme.colors.warning,
+    },
+    badgeAmbosTexto: {
+        color: '#38bdf8',
+    },
+    divisor: {
+        height: 1,
+        backgroundColor: theme.colors.borderSubtle,
+        marginVertical: theme.spacing.md,
+    },
+    footer: {
+        gap: theme.spacing.sm,
+    },
+    metaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    metaText: {
+        fontSize: theme.fontSize.sm,
+        color: theme.colors.textSecondary,
+        flex: 1,
     },
 });

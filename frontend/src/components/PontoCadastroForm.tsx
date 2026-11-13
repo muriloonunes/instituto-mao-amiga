@@ -13,7 +13,7 @@ export type PontoCadastroFormProps = {
     onSave: (ponto: PontoCadastro) => void;
 };
 
-type TipoPonto = 'Recebe' | 'Distribui';
+type TipoPonto = 'Coleta' | 'Distribui';
 
 type ErrosForm = {
     nomePonto?: string;
@@ -71,7 +71,7 @@ export const PontoCadastroForm = forwardRef<PontoFormHandle, PontoCadastroFormPr
         const [endereco, setEndereco] = useState(pontoExistente?.endereco ?? '');
         const [bairro, setBairro] = useState(pontoExistente?.bairro ?? '');
 
-        const [tipo, setTipo] = useState<TipoPonto>('Recebe');
+        const [tipo, setTipo] = useState<TipoPonto>('Coleta');
 
         const [diasSelecionados, setDiasSelecionados] = useState<number[]>([1, 2, 3, 4, 5]);
         const [aberto24h, setAberto24h] = useState(false);
@@ -85,7 +85,7 @@ export const PontoCadastroForm = forwardRef<PontoFormHandle, PontoCadastroFormPr
                 setNomePonto(pontoExistente.nome);
                 setEndereco(pontoExistente.endereco);
                 setBairro(pontoExistente.bairro);
-                setTipo(pontoExistente.tipo === 'Distribui' ? 'Distribui' : 'Recebe');
+                setTipo(pontoExistente.tipo === 'Distribui' ? 'Distribui' : 'Coleta');
             }
         }, [pontoExistente]);
 
@@ -186,34 +186,34 @@ export const PontoCadastroForm = forwardRef<PontoFormHandle, PontoCadastroFormPr
                         <TouchableOpacity
                             style={[
                                 styles.tipoCard,
-                                tipo === 'Recebe' && styles.tipoCardAtivo,
+                                tipo === 'Coleta' && styles.tipoCardAtivo,
                             ]}
                             activeOpacity={0.7}
-                            onPress={() => setTipo('Recebe')}
+                            onPress={() => setTipo('Coleta')}
                         >
                             <View
                                 style={[
                                     styles.tipoIconCircle,
-                                    tipo === 'Recebe' && styles.tipoIconCircleAtivo,
+                                    tipo === 'Coleta' && styles.tipoIconCircleAtivo,
                                 ]}
                             >
                                 <MaterialDesignIcons
                                     name="inbox-arrow-down"
                                     size={18}
-                                    color={tipo === 'Recebe' ? theme.colors.primaryVibrant : theme.colors.textMuted}
+                                    color={tipo === 'Coleta' ? theme.colors.primaryVibrant : theme.colors.textMuted}
                                 />
                             </View>
                             <View style={styles.tipoTextos}>
                                 <Text
                                     style={[
                                         styles.tipoTitulo,
-                                        tipo === 'Recebe' && styles.tipoTituloAtivo,
+                                        tipo === 'Coleta' && styles.tipoTituloAtivo,
                                     ]}
                                 >
-                                    Recebe
+                                    Coleta
                                 </Text>
                             </View>
-                            {tipo === 'Recebe' && (
+                            {tipo === 'Coleta' && (
                                 <MaterialDesignIcons
                                     name="check-circle"
                                     size={18}
