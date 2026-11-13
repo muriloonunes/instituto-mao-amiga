@@ -32,6 +32,13 @@ type DiaSemana = {
     isDomingo?: boolean;
 };
 
+type HorarioParseado = {
+    dias: number[];
+    is24h: boolean;
+    horaAbertura: string;
+    horaFechamento: string;
+};
+
 const DIAS_SEMANA: DiaSemana[] = [
     {id: 7, sigla: 'D', nome: 'Dom', isDomingo: true},
     {id: 1, sigla: 'S', nome: 'Seg'},
@@ -65,6 +72,68 @@ function formatarDiasSelecionados(selecionados: number[]): string {
     return `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}`;
 }
 
+function desmontarTextoHorario(horarioStr: string): HorarioParseado {
+    if (!horarioStr || typeof horarioStr !== 'string') return {
+        dias: [1, 2, 3, 4, 5],
+        is24h: false,
+        horaAbertura: '08:00',
+        horaFechamento: '18:00',
+    };
+
+    const texto = horarioStr.toLowerCase().trim()
+
+    const is24h = texto.includes('24h')
+
+    let horaAbertura = '08:00';
+    let horaFechamento = '18:00';
+
+    if (!is24h) {
+        const matchesHoras = texto.match(/(\d{1,2}:\d{2})/g);
+        if (matchesHoras && matchesHoras.length >= 2) {
+            horaAbertura = matchesHoras[0].padStart(5, '0');
+            horaFechamento = matchesHoras[1].padStart(5, '0');
+        }
+    }
+
+    let dias: number[] = [];
+
+    if (texto.includes('todos os dias')) {
+        dias = [1, 2, 3, 4, 5, 6, 7];
+    } else if (texto.includes('segunda a sexta') || texto.includes('seg. a sex.')) {
+        dias = [1, 2, 3, 4, 5]
+    } else if (texto.includes('segunda a sábado') || texto.includes('segunda a sabado') || texto.includes('seg. a sab.') || texto.includes('seg. a sáb.')) {
+        dias = [1, 2, 3, 4, 5, 6]
+    } else if (texto.includes('final de semana') || texto.includes('finais de semana')) {
+        dias = [6, 7];
+    } else {
+        const mapaDias: { [chave: string]: number } = {
+            'seg': 1,
+            'ter': 2,
+            'qua': 3,
+            'qui': 4,
+            'sex': 5,
+            'sáb': 6,
+            'sab': 6,
+            'dom': 7,
+        };
+
+        Object.entries(mapaDias).forEach(([termo, id]) => {
+            if (texto.includes(termo) && !dias.includes(id)) {
+                dias.push(id);
+            }
+        });
+
+        dias.sort((a, b) => a - b);
+    }
+
+    return {
+        dias: dias.length > 0 ? dias : [1, 2, 3, 4, 5],
+        is24h,
+        horaAbertura,
+        horaFechamento,
+    };
+}
+
 export const PontoCadastroForm = forwardRef<PontoFormHandle, PontoCadastroFormProps>(
     ({pontoExistente, onSave}, ref) => {
         const [nomePonto, setNomePonto] = useState(pontoExistente?.nome ?? '');
@@ -86,6 +155,12 @@ export const PontoCadastroForm = forwardRef<PontoFormHandle, PontoCadastroFormPr
                 setEndereco(pontoExistente.endereco);
                 setBairro(pontoExistente.bairro);
                 setTipo(pontoExistente.tipo === 'Distribui' ? 'Distribui' : 'Coleta');
+
+                const horario = desmontarTextoHorario(pontoExistente.horario);
+                setDiasSelecionados(horario.dias);
+                setAberto24h(horario.is24h);
+                setHoraAbertura(horario.horaAbertura);
+                setHoraFechamento(horario.horaFechamento);
             }
         }, [pontoExistente]);
 

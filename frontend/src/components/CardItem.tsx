@@ -9,25 +9,8 @@ export function CardItem({ponto, onPress}: { ponto: Ponto; onPress: () => void }
         ? `${ponto.endereco} • ${ponto.bairro}`
         : ponto.endereco;
 
-    const tipoLower = (ponto.tipo || '').toLowerCase();
-    const isAmbos = tipoLower.includes('coleta') && tipoLower.includes('distribui');
-    const isDistribuiApenas = !isAmbos && tipoLower.includes('distribui');
-
-    let badgeLabel: string;
-    let badgeStyle: any = styles.badgeRecebe;
-    let badgeTextStyle: any = styles.badgeRecebeTexto;
-
-    if (isAmbos) {
-        badgeLabel = "Coleta & Distribui";
-        badgeStyle = styles.badgeAmbos;
-        badgeTextStyle = styles.badgeAmbosTexto;
-    } else if (isDistribuiApenas) {
-        badgeLabel = "Distribui";
-        badgeStyle = styles.badgeDistribui;
-        badgeTextStyle = styles.badgeDistribuiTexto;
-    } else {
-        badgeLabel = "Coleta";
-    }
+    const isDistribui = (ponto.tipo || '').toLowerCase().includes('distribui');
+    const badgeLabel = isDistribui ? "Distribui" : "Coleta";
 
     return (
         <Pressable
@@ -47,8 +30,8 @@ export function CardItem({ponto, onPress}: { ponto: Ponto; onPress: () => void }
                         {ponto.nome}
                     </Text>
                 </View>
-                <View style={[styles.badgeTipo, badgeStyle]}>
-                    <Text style={[styles.badgeTipoTexto, badgeTextStyle]}>
+                <View style={[styles.badgeTipo, isDistribui ? styles.badgeDistribui : styles.badgeColeta]}>
+                    <Text style={[styles.badgeTipoTexto, isDistribui ? styles.badgeDistribuiTexto : styles.badgeColetaTexto]}>
                         {badgeLabel}
                     </Text>
                 </View>
@@ -127,26 +110,20 @@ const styles = StyleSheet.create({
         paddingVertical: 3,
         borderRadius: theme.borderRadius.full,
     },
-    badgeRecebe: {
-        backgroundColor: theme.colors.primaryLight,
+    badgeColeta: {
+        backgroundColor: 'rgba(45, 212, 191, 0.14)',
     },
     badgeDistribui: {
-        backgroundColor: 'rgba(251, 169, 76, 0.15)',
-    },
-    badgeAmbos: {
         backgroundColor: 'rgba(56, 189, 248, 0.15)',
     },
     badgeTipoTexto: {
         fontSize: 11,
         fontWeight: '700',
     },
-    badgeRecebeTexto: {
-        color: theme.colors.primaryVibrant,
+    badgeColetaTexto: {
+        color: '#2dd4bf',
     },
     badgeDistribuiTexto: {
-        color: theme.colors.warning,
-    },
-    badgeAmbosTexto: {
         color: '#38bdf8',
     },
     divisor: {

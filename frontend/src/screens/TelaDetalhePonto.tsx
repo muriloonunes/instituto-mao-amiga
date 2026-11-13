@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {
     ActivityIndicator,
+    Alert,
     Platform,
     Pressable,
     RefreshControl,
@@ -11,14 +12,16 @@ import {
     View,
 } from 'react-native';
 import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
-import {Ponto} from '../types/ponto';
+import {Ponto, PontoCadastro} from '../types/ponto';
 import {theme} from '../theme/theme';
-import {buscarPontoPorId} from '../services/pontosService';
+import {atualizarPonto, buscarPontoPorId, deletarPonto} from '../services/pontosService';
 import {ApiError} from '../types/api';
 import Toast from 'react-native-toast-message';
 import {getMensagemErro} from '../utils/erros';
 import {ErroState} from '../components/ErroState';
 import {TelaDetalhePontoProps} from '../types/navigation';
+import {ModalCadastro} from "../components/ModalCadastro";
+import {StatusAcao} from "../types/utils";
 
 export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
     const {pontoId} = route.params;
@@ -26,7 +29,11 @@ export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
     const telaLarga = width >= 768;
     const paddingInferior = telaLarga ? theme.spacing['3xl'] : 40;
 
-    const [ponto, setPonto] = useState<Ponto | null>(null);
+    const [modalEditarVisivel, setModalEditarVisivel] = useState(false);
+    const [statusAcao, setStatusAcao] = useState<StatusAcao>('idle');
+    const estaOcupado = statusAcao !== 'idle';
+
+    const [ponto, setPonto] = useState<Ponto | undefined>(undefined);
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState<ApiError | null>(null);
@@ -52,7 +59,6 @@ export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
                         fallback: 'Não foi possível atualizar os detalhes do ponto.',
                     }),
                     position: 'bottom',
-                    bottomOffset: paddingInferior + 25,
                 });
             } else {
                 setErro(apiError);
@@ -84,80 +90,132 @@ export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
         };
     }, [carregarPonto]);
 
+    function onExcluirClick() {
+        Alert.alert(
+            'Excluir Ponto',
+            'Deseja realmente excluir este ponto? Esta ação não pode ser desfeita.',
+            [
+                {text: 'Cancelar', style: 'cancel'},
+                {text: 'Excluir', style: 'destructive', onPress: onConfirmExcluir},
+            ],
+            {cancelable: true}
+        );
+    }
+
+    async function onConfirmEditar(novoPonto: PontoCadastro) {
+        if (!novoPonto || !ponto) return;
+
+        try {
+            setStatusAcao('editando')
+            const pontoApi = await atualizarPonto(ponto.id, novoPonto)
+            setPonto(pontoApi)
+            navigation.setParams({pontoId: pontoApi.id})
+            Toast.show({
+                type: "success",
+                text1: 'Ponto atualizado com sucesso.'
+            })
+        } catch (error) {
+            throw error;
+        } finally {
+            setStatusAcao('idle')
+        }
+    }
+
+    async function onConfirmExcluir() {
+        if (!ponto) return;
+
+        try {
+            setStatusAcao('excluindo')
+            await deletarPonto(ponto.id)
+            Toast.show({
+                type: "success",
+                text1: 'Ponto excluído com sucesso.',
+                bottomOffset: paddingInferior + 25
+            })
+            try {
+                navigation.reset({
+                    index: 0,
+                    routes: [{name: 'Abas', params: {screen: 'Pontos'}}],
+                })
+            } catch (error) {
+                navigation.goBack()
+            }
+        } catch (error) {
+            setStatusAcao('idle')
+            Toast.show({
+                type: "error",
+                text1: getMensagemErro(error, {fallback: 'Ocorreu um erro ao excluir o ponto.'}),
+            })
+        }
+    }
+
     useLayoutEffect(() => {
-        navigation.setOptions({
-            headerRight: () => (
-                <View style={styles.headerAcoes}>
-                    <Pressable
-                        style={({pressed}) => [
-                            styles.headerBotaoAcao,
-                            pressed && styles.headerBotaoAcaoPressionado,
-                        ]}
-                        onPress={() => {}}
-                        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
-                        android_ripple={{
-                            color: theme.colors.primaryLight,
-                            borderless: true,
-                            radius: 20,
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel="Editar Ponto"
-                    >
-                        <MaterialDesignIcons name="pencil-outline" size={24} color={theme.colors.primaryVibrant} />
-                    </Pressable>
-                    <Pressable
-                        style={({pressed}) => [
-                            styles.headerBotaoAcao,
-                            pressed && styles.headerBotaoAcaoPressionado,
-                        ]}
-                        onPress={() => {}}
-                        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
-                        android_ripple={{
-                            color: 'rgba(247, 90, 104, 0.25)',
-                            borderless: true,
-                            radius: 20,
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel="Excluir Ponto"
-                    >
-                        <MaterialDesignIcons name="trash-can-outline" size={24} color={theme.colors.danger} />
-                    </Pressable>
-                </View>
-            ),
-        });
-    }, [navigation]);
+        if (ponto) {
+            navigation.setOptions({
+                headerRight: () => (
+                    <View style={styles.headerAcoes}>
+                        <Pressable
+                            style={({pressed}) => [
+                                styles.headerBotaoAcao,
+                                pressed && styles.headerBotaoAcaoPressionado,
+                                statusAcao === 'editando' && styles.headerBotaoDesabilitado,
+                            ]}
+                            onPress={() => setModalEditarVisivel(true)}
+                            disabled={estaOcupado}
+                            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                            android_ripple={{
+                                color: theme.colors.primaryLight,
+                                borderless: true,
+                                radius: 20,
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel="Editar Ponto"
+                        >
+                            <MaterialDesignIcons name="pencil-outline" size={24} color={theme.colors.primaryVibrant}/>
+                        </Pressable>
+                        <Pressable
+                            style={({pressed}) => [
+                                styles.headerBotaoAcao,
+                                pressed && styles.headerBotaoAcaoPressionado,
+                                statusAcao === 'excluindo' && styles.headerBotaoDesabilitado,
+                            ]}
+                            onPress={onExcluirClick}
+                            disabled={estaOcupado}
+                            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                            android_ripple={{
+                                color: 'rgba(247, 90, 104, 0.25)',
+                                borderless: true,
+                                radius: 20,
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel="Excluir Ponto"
+                        >
+                            {statusAcao === 'excluindo' ? (
+                                <ActivityIndicator size="small" color={theme.colors.danger}/>
+                            ) : (
+                                <MaterialDesignIcons name="trash-can-outline" size={24} color={theme.colors.danger}/>
+                            )}
+                        </Pressable>
+                    </View>
+                ),
+            });
+        }
+    }, [navigation, ponto]);
 
     if (carregando) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={theme.colors.primaryVibrant} />
+                <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
             </View>
         );
     }
 
-    const tipoLower = (ponto?.tipo || '').toLowerCase();
-    const isAmbos = tipoLower.includes('coleta') && tipoLower.includes('distribui');
-    const isDistribuiApenas = !isAmbos && tipoLower.includes('distribui');
-
-    let badgeLabel = ponto?.tipo || '';
-    let badgeIcon: any = "inbox-arrow-down";
-    let badgeStyle: any = styles.badgeRecebe;
-    let badgeTextStyle: any = styles.badgeRecebeTexto;
-    let badgeIconColor: string = theme.colors.primaryVibrant;
-
-    if (isAmbos) {
-        badgeLabel = "Coleta e Distribui";
-        badgeIcon = "swap-horizontal-bold";
-        badgeStyle = styles.badgeAmbos;
-        badgeTextStyle = styles.badgeAmbosTexto;
-        badgeIconColor = "#38bdf8";
-    } else if (isDistribuiApenas) {
-        badgeLabel = "Distribui";
-        badgeIcon = "truck-delivery-outline";
-        badgeStyle = styles.badgeDistribui;
-        badgeTextStyle = styles.badgeDistribuiTexto;
-        badgeIconColor = theme.colors.warning;
-    }
+    const isDistribui = (ponto?.tipo || '').toLowerCase().includes('distribui');
+    const badgeLabel = isDistribui ? "Distribui" : "Coleta";
+    const badgeIcon: any = isDistribui ? "truck-delivery-outline" : "inbox-arrow-down";
+    const badgeStyle = isDistribui ? styles.badgeDistribui : styles.badgeColeta;
+    const badgeTextStyle = isDistribui ? styles.badgeDistribuiTexto : styles.badgeColetaTexto;
+    const badgeIconColor = isDistribui ? '#38bdf8' : '#2dd4bf';
 
     return (
         <View style={styles.container}>
@@ -177,6 +235,13 @@ export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
                     (erro || !ponto) && styles.scrollVazio,
                 ]}
             >
+                <ModalCadastro
+                    visible={modalEditarVisivel}
+                    abaAberta={'Pontos'}
+                    onClose={() => setModalEditarVisivel(false)}
+                    onSavePonto={onConfirmEditar}
+                    pontoExistente={ponto}
+                />
                 {erro || !ponto ? (
                     <ErroState
                         erro={erro ?? new ApiError(404, 'Ponto não encontrado')}
@@ -213,21 +278,20 @@ export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
                         <View style={styles.secao}>
                             <Text style={styles.secaoTitulo}>LOCALIZAÇÃO</Text>
                             <View style={styles.card}>
-                                <LinhaInfo label="Endereço:" valor={ponto.endereco} icone="map-marker-outline" />
-                                <LinhaInfo label="Bairro:" valor={ponto.bairro || 'Não informado'} icone="city-variant-outline" temDivisor={false} />
+                                <LinhaInfo label="Endereço:" valor={ponto.endereco} icone="map-marker-outline"/>
+                                <LinhaInfo label="Bairro:" valor={ponto.bairro || 'Não informado'}
+                                           icone="city-variant-outline" temDivisor={false}/>
                             </View>
                         </View>
 
                         <View style={styles.secao}>
                             <Text style={styles.secaoTitulo}>FUNCIONAMENTO</Text>
                             <View style={styles.card}>
-                                <LinhaInfo label="Dias e Horários:" valor={ponto.horario} icone="clock-outline" />
+                                <LinhaInfo label="Dias e Horários:" valor={ponto.horario} icone="clock-outline"/>
                                 <LinhaInfo
                                     label="Atividade do Ponto:"
                                     valor={
-                                        isAmbos
-                                            ? "Ponto de Coleta e Distribuição (Recebe doações da comunidade e entrega mantimentos às famílias)"
-                                            : isDistribuiApenas
+                                        isDistribui
                                             ? "Ponto de Distribuição (Entrega de mantimentos para famílias)"
                                             : "Ponto de Coleta (Recebe doações de itens da comunidade)"
                                     }
@@ -242,28 +306,46 @@ export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
                                 style={({pressed}) => [
                                     styles.botaoEditar,
                                     pressed && styles.botaoEditarPressionado,
+                                    estaOcupado && styles.botaoDesabilitado,
                                 ]}
-                                onPress={() => {}}
+                                onPress={() => setModalEditarVisivel(true)}
+                                disabled={estaOcupado}
                                 android_ripple={{color: theme.colors.primaryLight}}
                                 accessibilityRole="button"
                                 accessibilityLabel="Editar Ponto"
                             >
-                                <MaterialDesignIcons name="pencil-outline" size={20} color={theme.colors.primaryVibrant} />
-                                <Text style={styles.botaoEditarTexto}>Editar Ponto</Text>
+                                {statusAcao === 'editando' ? (
+                                    <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
+                                ) : (
+                                    <>
+                                        <MaterialDesignIcons name="pencil-outline" size={20}
+                                                             color={theme.colors.primaryVibrant}/>
+                                        <Text style={styles.botaoEditarTexto}>Editar Ponto</Text>
+                                    </>
+                                )}
                             </Pressable>
 
                             <Pressable
                                 style={({pressed}) => [
                                     styles.botaoExcluir,
                                     pressed && styles.botaoExcluirPressionado,
+                                    estaOcupado && styles.botaoDesabilitado,
                                 ]}
-                                onPress={() => {}}
+                                onPress={onExcluirClick}
+                                disabled={estaOcupado}
                                 android_ripple={{color: 'rgba(247, 90, 104, 0.2)'}}
                                 accessibilityRole="button"
                                 accessibilityLabel="Excluir Ponto"
                             >
-                                <MaterialDesignIcons name="trash-can-outline" size={20} color={theme.colors.danger} />
-                                <Text style={styles.botaoExcluirTexto}>Excluir Ponto</Text>
+                                {statusAcao === 'excluindo' ? (
+                                    <ActivityIndicator size="small" color={theme.colors.danger}/>
+                                ) : (
+                                    <>
+                                        <MaterialDesignIcons name="trash-can-outline" size={20}
+                                                             color={theme.colors.danger}/>
+                                        <Text style={styles.botaoExcluirTexto}>Excluir Ponto</Text>
+                                    </>
+                                )}
                             </Pressable>
                         </View>
                     </View>
@@ -283,14 +365,15 @@ function LinhaInfo({label, valor, icone, temDivisor = true}: {
         <>
             <View style={styles.linhaInfo}>
                 {icone && (
-                    <MaterialDesignIcons name={icone} size={18} color={theme.colors.primaryVibrant} style={{marginTop: 2}} />
+                    <MaterialDesignIcons name={icone} size={18} color={theme.colors.primaryVibrant}
+                                         style={{marginTop: 2}}/>
                 )}
                 <View style={styles.linhaConteudo}>
                     <Text style={styles.linhaLabel}>{label}</Text>
                     <Text style={styles.linhaValor}>{valor}</Text>
                 </View>
             </View>
-            {temDivisor && <View style={styles.divisor} />}
+            {temDivisor && <View style={styles.divisor}/>}
         </>
     );
 }
@@ -333,6 +416,9 @@ const styles = StyleSheet.create({
     headerBotaoAcaoPressionado: {
         opacity: 0.6,
     },
+    headerBotaoDesabilitado: {
+        opacity: 0.4,
+    },
     heroCard: {
         backgroundColor: theme.colors.cardBackground,
         borderRadius: theme.borderRadius.xl,
@@ -371,26 +457,20 @@ const styles = StyleSheet.create({
         paddingVertical: theme.spacing.xs,
         borderRadius: theme.borderRadius.full,
     },
-    badgeRecebe: {
-        backgroundColor: theme.colors.primaryLight,
+    badgeColeta: {
+        backgroundColor: 'rgba(45, 212, 191, 0.14)',
     },
     badgeDistribui: {
-        backgroundColor: 'rgba(251, 169, 76, 0.15)',
-    },
-    badgeAmbos: {
         backgroundColor: 'rgba(56, 189, 248, 0.15)',
     },
     badgeTipoTexto: {
         fontSize: theme.fontSize.sm,
         fontWeight: '700',
     },
-    badgeRecebeTexto: {
-        color: theme.colors.primaryVibrant,
+    badgeColetaTexto: {
+        color: '#2dd4bf',
     },
     badgeDistribuiTexto: {
-        color: theme.colors.warning,
-    },
-    badgeAmbosTexto: {
         color: '#38bdf8',
     },
     secao: {
@@ -440,6 +520,9 @@ const styles = StyleSheet.create({
         marginTop: theme.spacing.md,
         marginBottom: theme.spacing['2xl'],
         gap: theme.spacing.md,
+    },
+    botaoDesabilitado: {
+        opacity: 0.6,
     },
     botaoEditar: {
         flexDirection: 'row',

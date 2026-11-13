@@ -22,6 +22,7 @@ import {Ponto} from "../types/ponto";
 import Toast from "react-native-toast-message";
 import {getMensagemErro} from "../utils/erros";
 import {TelaDetalheDoacaoProps} from "../types/navigation";
+import {StatusAcao} from "../types/utils";
 
 interface SecaoPontoDoacaoProps {
     ponto: Ponto | null;
@@ -44,7 +45,7 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
     const [modalEditarVisivel, setModalEditarVisivel] = useState(false);
     const [atualizando, setAtualizando] = useState(false);
     const [carregandoPonto, setCarregandoPonto] = useState(true);
-    const [statusAcao, setStatusAcao] = useState<'idle' | 'editando' | 'excluindo'>('idle');
+    const [statusAcao, setStatusAcao] = useState<StatusAcao>('idle');
 
     const estaOcupado = statusAcao !== 'idle';
     const pontoId = doacao?.pontoId;
@@ -148,7 +149,10 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
             }
         } catch {
             setStatusAcao('idle');
-            Alert.alert('Erro', 'Ocorreu um erro ao excluir a doação.');
+            Toast.show({
+                type: "error",
+                text1: 'Ocorreu um erro ao excluir a doação.'
+            })
         }
     }
 
@@ -259,7 +263,6 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
                 onClose={() => setModalEditarVisivel(false)}
                 doacaoExistente={doacao}
                 onSaveDoacao={onConfirmEditar}
-                onSavePonto={() => {}}
             />
 
             <View style={styles.conteudoCentral}>

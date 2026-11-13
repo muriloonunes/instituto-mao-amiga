@@ -255,7 +255,7 @@ export function ModalCadastro(
                             ) : (
                                 <>
                                     <MaterialDesignIcons name="check" size={18} color={theme.colors.textWhite}/>
-                                    <Text style={styles.buttonSaveText}>Salvar</Text>
+                                    <Text style={styles.buttonSaveText}>{isEdicao ? 'Salvar alterações' : 'Salvar'}</Text>
                                 </>
                             )}
                         </Pressable>
