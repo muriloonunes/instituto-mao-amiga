@@ -14,13 +14,22 @@
 # VS Code
 .vscode/
 
-# IntelliJ IDEA / Android Studio
-.idea/shelf/
-.idea/workspace.xml
-.idea/httpRequests/
-.idea/queries/
-.idea/dataSources/
-.idea/dataSources.local.xml
+# IntelliJ IDEA / Android Studio (arquivos locais, sensíveis e gerados por build)
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/shelf/
+.idea/**/httpRequests/
+.idea/**/queries/
+.idea/**/dataSources/
+.idea/**/dataSources.xml
+.idea/**/dataSources.local.xml
+.idea/**/gradle.xml
+.idea/**/AndroidProjectSystem.xml
+.idea/**/caches/
+.idea/**/libraries/
+.idea/**/modules.xml
+.idea/**/copilot.data.migration.*.xml
 *.iws
 *.ipr
 *.iml
@@ -43,6 +52,9 @@
 # ------------------------------------------------------------------------------
 # Backend (Spring Boot / Java / Maven)
 # ------------------------------------------------------------------------------
+backend/data/
+*.mv.db
+*.lock.db
 backend/HELP.md
 HELP.md
 target/
