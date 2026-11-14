@@ -18,7 +18,7 @@ import java.util.List;
  */
 @Repository
 public interface PontoRepository extends JpaRepository<Ponto, Long> {
-    @Query("SELECT new com.murilo.maoamiga.entity.dto.PontoResumoDTO(p.id, p.nome) FROM Ponto p ORDER BY LOWER(p.nome)")
+    @Query("SELECT new com.murilo.maoamiga.entity.dto.PontoResumoDTO(p.id, p.nome) FROM Ponto p WHERE (p.tipo = 'Coleta') ORDER BY LOWER(p.nome)")
     List<PontoResumoDTO> findAllResumo();
 
     @Query("SELECT p FROM Ponto p WHERE LOWER(p.nome) LIKE LOWER(CONCAT('%', :filtro, '%')) OR LOWER(p.bairro) LIKE LOWER(CONCAT('%', :filtro, '%'))")
