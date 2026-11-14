@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
+import React, {useCallback, useLayoutEffect, useState} from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -23,7 +23,8 @@ import Toast from "react-native-toast-message";
 import {getMensagemErro} from "../utils/erros";
 import {TelaDetalheDoacaoProps} from "../types/navigation";
 import {StatusAcao} from "../types/utils";
-import {atualizarDoacao, deletarDoacao} from "../services/doacoesService";
+import {atualizarDoacao, buscarDoacaoPorId, deletarDoacao} from "../services/doacoesService";
+import {ErroState} from "../components/ErroState";
 
 interface SecaoPontoDoacaoProps {
     ponto: Ponto | null;
@@ -39,55 +40,83 @@ interface LinhaInfoProps {
 }
 
 export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
+    const {doacaoId} = route.params;
+
     const {width} = useWindowDimensions();
     const telaLarga = width >= 768;
     const paddingInferior = telaLarga ? theme.spacing['3xl'] : 40;
 
-    const [doacao, setDoacao] = useState<Doacao | undefined>(route?.params.doacao);
-    const [ponto, setPonto] = useState<Ponto | null>(null);
+    const [doacao, setDoacao] = useState<Doacao | undefined>(undefined);
+    const [carregando, setCarregando] = useState(true);
     const [erro, setErro] = useState<ApiError | null>(null);
+
+    const [ponto, setPonto] = useState<Ponto | null>(null);
+    const [carregandoPonto, setCarregandoPonto] = useState(true);
+    const [erroPonto, setErroPonto] = useState<ApiError | null>(null);
 
     const [modalEditarVisivel, setModalEditarVisivel] = useState(false);
     const [atualizando, setAtualizando] = useState(false);
-    const [carregandoPonto, setCarregandoPonto] = useState(true);
     const [statusAcao, setStatusAcao] = useState<StatusAcao>('idle');
 
     const estaOcupado = statusAcao !== 'idle';
-    const pontoId = doacao?.pontoId;
 
-    useEffect(() => {
-        if (route?.params?.doacao) {
-            setDoacao(route.params.doacao);
+    const carregarDadosCompletos = useCallback(async () => {
+        const doacaoApi = await buscarDoacaoPorId(doacaoId)
+        setDoacao(doacaoApi);
+        setErro(null);
+
+        if (doacaoApi.pontoId) {
+            try {
+                setCarregandoPonto(true);
+                const pontoApi = await buscarPontoPorId(doacaoApi.pontoId)
+                setPonto(pontoApi)
+                setErroPonto(null)
+            } catch (errPonto) {
+                setErroPonto(errPonto instanceof ApiError ? errPonto : new ApiError(-1, 'Erro ao buscar ponto'));
+            } finally {
+                setCarregandoPonto(false);
+            }
         }
-    }, [route?.params?.doacao]);
+    }, [doacaoId])
 
-    useEffect(() => {
-        setPonto(null);
-        setErro(null);
-    }, [pontoId]);
+    useFocusEffect(
+        useCallback(() => {
+            let ativo = true;
 
-    const carregarPonto = useCallback(async () => {
-        if (pontoId == null) return;
-        const response = await buscarPontoPorId(pontoId);
-        setPonto(response);
-        setErro(null);
-    }, [pontoId]);
+            async function inicializar() {
+                setCarregando(true);
+                setErro(null);
+                try {
+                    await carregarDadosCompletos();
+                } catch (error: any) {
+                    if (ativo) {
+                        setErro(error instanceof ApiError ? error : new ApiError(-1, 'Erro desconhecido'));
+                    }
+                } finally {
+                    if (ativo) setCarregando(false);
+                }
+            }
+
+            inicializar();
+
+            return () => {
+                ativo = false;
+            };
+        }, [carregarDadosCompletos])
+    );
 
     const onRefresh = useCallback(async () => {
         setAtualizando(true);
         try {
-            await carregarPonto();
+            await carregarDadosCompletos();
         } catch (err: any) {
             console.error(err);
             const apiError = err instanceof ApiError ? err : new ApiError(-1, 'Erro desconhecido');
 
-            if (ponto) {
+            if (doacao) {
                 Toast.show({
                     type: 'error',
-                    text1: getMensagemErro(err, {
-                        naoEncontrado: 'Ponto não encontrado.',
-                        fallback: 'Não foi possível atualizar os detalhes do ponto.',
-                    }),
+                    text1: getMensagemErro(err, { fallback: 'Não foi possível atualizar os detalhes da doação.' }),
                     position: 'bottom',
                 });
             } else {
@@ -96,31 +125,7 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
         } finally {
             setAtualizando(false);
         }
-    }, [carregarPonto, ponto]);
-
-    useFocusEffect(
-        useCallback(() => {
-            let ativo = true;
-
-            (async () => {
-                setCarregandoPonto(true);
-                try {
-                    await carregarPonto();
-                } catch (err: any) {
-                    console.error(err);
-                    if (ativo) {
-                        setErro(err instanceof ApiError ? err : new ApiError(-1, 'Erro desconhecido'));
-                    }
-                } finally {
-                    if (ativo) setCarregandoPonto(false);
-                }
-            })();
-
-            return () => {
-                ativo = false;
-            };
-        }, [carregarPonto])
-    );
+    }, [carregarDadosCompletos, doacao]);
 
     async function onConfirmEditar(novaDoacao: DoacaoCadastro) {
         if (!novaDoacao || !doacao) return;
@@ -129,7 +134,7 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
             setStatusAcao('editando');
             const doacaoApi = await atualizarDoacao(doacao.id, novaDoacao);
             setDoacao(doacaoApi);
-            navigation.setParams({doacao: doacaoApi});
+            navigation.setParams({doacaoId: doacaoApi.id});
             Toast.show({
                 type: 'success',
                 text1: 'Doação editada com sucesso.',
@@ -149,7 +154,7 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
             await deletarDoacao(doacao.id);
             Toast.show({
                 type: "success",
-                text1: 'Doação excluído com sucesso.',
+                text1: 'Doação excluída com sucesso.',
                 bottomOffset: paddingInferior + 25
             })
             try {
@@ -238,11 +243,22 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
         });
     }, [navigation, doacao, statusAcao, estaOcupado]);
 
-    if (!doacao) {
+    if (carregando) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
+            </View>
+        );
+    }
+
+    if (erro || !doacao) {
         return (
             <View style={styles.containerVazio}>
-                <MaterialDesignIcons name="alert-circle-outline" size={48} color={theme.colors.danger}/>
-                <Text style={styles.textoErro}>Doação não encontrada.</Text>
+                <ErroState
+                    erro={erro ?? new ApiError(404, 'Doação não encontrada')}
+                    naoEncontrado="Doação não encontrada."
+                    fallback="Não foi possível carregar os detalhes da doação."
+                />
                 <Pressable
                     style={({pressed}) => [styles.botaoVoltar, pressed && styles.botaoPressionado]}
                     onPress={() => navigation.goBack()}
@@ -321,9 +337,9 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
 
                 <SecaoPontoDoacao
                     ponto={ponto}
-                    erro={erro}
+                    erro={erroPonto}
                     carregando={carregandoPonto}
-                    pontoId={pontoId}
+                    pontoId={doacao.pontoId}
                 />
 
                 <View style={styles.secaoBotao}>
@@ -484,6 +500,11 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: theme.spacing['2xl'],
         paddingBottom: theme.spacing['4xl'],
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     conteudoCentral: {
         width: '100%',

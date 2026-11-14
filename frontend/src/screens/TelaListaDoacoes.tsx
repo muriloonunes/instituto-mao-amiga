@@ -313,7 +313,7 @@ export function TelaListaDoacoes({onNovaDoacao, atualizacaoKey}: TelaListaDoacoe
                                 <CardDoacao
                                     doacao={item}
                                     nomePonto={nomeOuStatus}
-                                    onPress={() => navigation.navigate('TelaDetalheDoacao', {doacao: item})}
+                                    onPress={() => navigation.navigate('TelaDetalheDoacao', {doacaoId: item.id})}
                                 />
                             );
                         }}
