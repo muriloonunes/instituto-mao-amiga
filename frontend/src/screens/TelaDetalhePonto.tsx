@@ -211,11 +211,6 @@ export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
     }
 
     const isDistribui = (ponto?.tipo || '').toLowerCase().includes('distribui');
-    const badgeLabel = isDistribui ? "Distribui" : "Coleta";
-    const badgeIcon: any = isDistribui ? "truck-delivery-outline" : "inbox-arrow-down";
-    const badgeStyle = isDistribui ? styles.badgeDistribui : styles.badgeColeta;
-    const badgeTextStyle = isDistribui ? styles.badgeDistribuiTexto : styles.badgeColetaTexto;
-    const badgeIconColor = isDistribui ? '#38bdf8' : '#2dd4bf';
 
     return (
         <View style={styles.container}>
@@ -250,28 +245,28 @@ export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
                     />
                 ) : (
                     <View style={styles.conteudoCentral}>
-                        <View style={styles.heroCard}>
-                            <View style={styles.heroIconWrapper}>
+                        <View style={styles.heroCompactoCard}>
+                            <View style={styles.heroCompactoIcone}>
                                 <MaterialDesignIcons
                                     name="map-marker-radius"
-                                    size={36}
+                                    size={24}
                                     color={theme.colors.primaryVibrant}
                                 />
                             </View>
-
-                            <Text style={styles.heroNome}>{ponto.nome}</Text>
-
-                            <View style={styles.heroBadges}>
-                                <View style={[styles.badgeTipo, badgeStyle]}>
-                                    <MaterialDesignIcons
-                                        name={badgeIcon}
-                                        size={14}
-                                        color={badgeIconColor}
-                                    />
-                                    <Text style={[styles.badgeTipoTexto, badgeTextStyle]}>
-                                        {badgeLabel}
-                                    </Text>
-                                </View>
+                            <Text style={styles.heroCompactoNome} numberOfLines={2}>
+                                {ponto.nome}
+                            </Text>
+                            <View
+                                style={[
+                                    styles.heroIconeAtividade,
+                                    isDistribui ? styles.heroIconeDistribui : styles.heroIconeColeta,
+                                ]}
+                            >
+                                <MaterialDesignIcons
+                                    name={isDistribui ? "truck-delivery-outline" : "inbox-arrow-down"}
+                                    size={18}
+                                    color={isDistribui ? '#38bdf8' : '#2dd4bf'}
+                                />
                             </View>
                         </View>
 
@@ -419,59 +414,45 @@ const styles = StyleSheet.create({
     headerBotaoDesabilitado: {
         opacity: 0.4,
     },
-    heroCard: {
+    heroCompactoCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: theme.colors.cardBackground,
         borderRadius: theme.borderRadius.xl,
         borderWidth: 1,
         borderColor: theme.colors.cardBorder,
-        padding: theme.spacing['2xl'],
-        alignItems: 'center',
+        paddingHorizontal: theme.spacing.lg,
+        paddingVertical: theme.spacing.lg,
         marginBottom: theme.spacing['2xl'],
+        gap: theme.spacing.md,
     },
-    heroIconWrapper: {
-        width: 68,
-        height: 68,
-        borderRadius: 34,
+    heroCompactoIcone: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
         backgroundColor: theme.colors.iconSurface,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: theme.spacing.lg,
     },
-    heroNome: {
-        fontSize: theme.fontSize['3xl'],
+    heroCompactoNome: {
+        flex: 1,
+        fontSize: theme.fontSize.lg,
         fontWeight: 'bold',
         color: theme.colors.textWhite,
-        textAlign: 'center',
-        marginBottom: theme.spacing.md,
+        lineHeight: 24,
     },
-    heroBadges: {
-        flexDirection: 'row',
+    heroIconeAtividade: {
+        width: 34,
+        height: 34,
+        borderRadius: 17,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    badgeTipo: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: theme.spacing.md,
-        paddingVertical: theme.spacing.xs,
-        borderRadius: theme.borderRadius.full,
-    },
-    badgeColeta: {
+    heroIconeColeta: {
         backgroundColor: 'rgba(45, 212, 191, 0.14)',
     },
-    badgeDistribui: {
+    heroIconeDistribui: {
         backgroundColor: 'rgba(56, 189, 248, 0.15)',
-    },
-    badgeTipoTexto: {
-        fontSize: theme.fontSize.sm,
-        fontWeight: '700',
-    },
-    badgeColetaTexto: {
-        color: '#2dd4bf',
-    },
-    badgeDistribuiTexto: {
-        color: '#38bdf8',
     },
     secao: {
         marginBottom: theme.spacing['2xl'],

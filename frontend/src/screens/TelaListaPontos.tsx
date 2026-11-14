@@ -11,7 +11,7 @@ import {
     View
 } from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
-import {CardItem} from "../components/CardItem";
+import {CardPonto} from "../components/CardPonto";
 import {theme} from "../theme/theme";
 import {InputPesquisar} from "../components/InputPesquisar";
 import {useFocusEffect, useNavigation} from "@react-navigation/native";
@@ -226,7 +226,7 @@ export function TelaListaPontos({onNovoPonto, atualizacaoKey}: TelaListaPontosPr
                         onEndReached={carregarProximaPagina}
                         onEndReachedThreshold={0.5}
                         renderItem={({item}) => (
-                            <CardItem
+                            <CardPonto
                                 ponto={item}
                                 onPress={() => navigation.navigate('TelaDetalhePonto', {pontoId: item.id})}
                             />

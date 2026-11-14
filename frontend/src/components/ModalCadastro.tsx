@@ -1,5 +1,6 @@
 import {
     ActivityIndicator,
+    Animated,
     KeyboardAvoidingView,
     Modal,
     Platform,
@@ -33,10 +34,15 @@ type ModalCadastroProps = {
 export function ModalCadastro(
     {visible, onClose, abaAberta, onSaveDoacao, onSavePonto, doacaoExistente, pontoExistente}: ModalCadastroProps
 ) {
-    const [abaSelecionada, setAbaSelecionada] = useState<'Pontos' | 'Doações'>(abaAberta)
+    const [abaSelecionada, setAbaSelecionada] = useState<'Pontos' | 'Doações'>(abaAberta);
     const [carregandoForm, setCarregandoForm] = useState(false);
     const [salvando, setSalvando] = useState(false);
     const [erroSalvar, setErroSalvar] = useState<string | null>(null);
+    const [tabContainerWidth, setTabContainerWidth] = useState(0);
+
+    const tabPosition = useRef(new Animated.Value(abaAberta === 'Pontos' ? 0 : 1)).current;
+    const formOpacity = useRef(new Animated.Value(1)).current;
+    const formTranslateX = useRef(new Animated.Value(0)).current;
 
     const doacaoFormRef = useRef<DoacaoFormHandle>(null);
     const pontoFormRef = useRef<PontoFormHandle>(null);
@@ -50,8 +56,42 @@ export function ModalCadastro(
             setAbaSelecionada(abaAberta);
             setSalvando(false);
             setErroSalvar(null);
+            tabPosition.setValue(abaAberta === 'Pontos' ? 0 : 1);
+            formOpacity.setValue(1);
+            formTranslateX.setValue(0);
         }
     }, [visible, abaAberta]);
+
+    function trocarAba(novaAba: 'Pontos' | 'Doações') {
+        if (novaAba === abaSelecionada) return;
+        setErroSalvar(null);
+
+        const offsetInicial = novaAba === 'Doações' ? 14 : -14;
+
+        Animated.spring(tabPosition, {
+            toValue: novaAba === 'Pontos' ? 0 : 1,
+            tension: 70,
+            friction: 10,
+            useNativeDriver: true,
+        }).start();
+
+        formOpacity.setValue(0);
+        formTranslateX.setValue(offsetInicial);
+        setAbaSelecionada(novaAba);
+
+        Animated.parallel([
+            Animated.timing(formOpacity, {
+                toValue: 1,
+                duration: 160,
+                useNativeDriver: true,
+            }),
+            Animated.timing(formTranslateX, {
+                toValue: 0,
+                duration: 220,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }
 
     function handleSalvar() {
         if (salvando) return;
@@ -150,16 +190,32 @@ export function ModalCadastro(
                     </View>
 
                     {!isEdicao && (
-                        <View style={styles.tabSelectorContainer}>
+                        <View
+                            style={styles.tabSelectorContainer}
+                            onLayout={(e) => setTabContainerWidth(e.nativeEvent.layout.width)}
+                        >
+                            {tabContainerWidth > 0 && (
+                                <Animated.View
+                                    style={[
+                                        styles.tabIndicator,
+                                        {
+                                            width: (tabContainerWidth - 8) / 2,
+                                            transform: [
+                                                {
+                                                    translateX: tabPosition.interpolate({
+                                                        inputRange: [0, 1],
+                                                        outputRange: [0, (tabContainerWidth - 8) / 2],
+                                                    }),
+                                                },
+                                            ],
+                                        },
+                                    ]}
+                                />
+                            )}
+
                             <Pressable
-                                style={[
-                                    styles.tabButton,
-                                    abaSelecionada === 'Pontos' && styles.tabButtonActive
-                                ]}
-                                onPress={() => {
-                                    setAbaSelecionada('Pontos')
-                                    setErroSalvar(null);
-                                }}
+                                style={styles.tabButton}
+                                onPress={() => trocarAba('Pontos')}
                             >
                                 <MaterialDesignIcons
                                     name="map-marker-outline"
@@ -177,14 +233,8 @@ export function ModalCadastro(
                             </Pressable>
 
                             <Pressable
-                                style={[
-                                    styles.tabButton,
-                                    abaSelecionada === 'Doações' && styles.tabButtonActive
-                                ]}
-                                onPress={() => {
-                                    setAbaSelecionada('Doações')
-                                    setErroSalvar(null);
-                                }}
+                                style={styles.tabButton}
+                                onPress={() => trocarAba('Doações')}
                             >
                                 <MaterialDesignIcons
                                     name="hand-heart-outline"
@@ -204,20 +254,30 @@ export function ModalCadastro(
                     )}
 
                     <View style={styles.modalBody}>
-                        {abaSelecionada === 'Pontos' ? (
-                            <PontoCadastroForm
-                                pontoExistente={pontoExistente}
-                                onSave={handleSalvarPonto}
-                                ref={pontoFormRef}
-                            />
-                        ) : (
-                            <DoacaoCadastroForm
-                                ref={doacaoFormRef}
-                                doacaoExistente={doacaoExistente}
-                                onCarregandoChange={setCarregandoForm}
-                                onSave={handleSalvarDoacao}
-                            />
-                        )}
+                        <Animated.View
+                            style={[
+                                styles.animatedFormWrapper,
+                                {
+                                    opacity: formOpacity,
+                                    transform: [{translateX: formTranslateX}],
+                                },
+                            ]}
+                        >
+                            {abaSelecionada === 'Pontos' ? (
+                                <PontoCadastroForm
+                                    pontoExistente={pontoExistente}
+                                    onSave={handleSalvarPonto}
+                                    ref={pontoFormRef}
+                                />
+                            ) : (
+                                <DoacaoCadastroForm
+                                    ref={doacaoFormRef}
+                                    doacaoExistente={doacaoExistente}
+                                    onCarregandoChange={setCarregandoForm}
+                                    onSave={handleSalvarDoacao}
+                                />
+                            )}
+                        </Animated.View>
                     </View>
 
                     {erroSalvar && (
@@ -336,6 +396,17 @@ const styles = StyleSheet.create({
         marginTop: theme.spacing.md,
         borderWidth: 1,
         borderColor: theme.colors.borderSubtle,
+        position: 'relative',
+    },
+    tabIndicator: {
+        position: 'absolute',
+        top: 4,
+        left: 4,
+        bottom: 4,
+        backgroundColor: theme.colors.surfaceElevated,
+        borderRadius: theme.borderRadius.md,
+        borderWidth: 1,
+        borderColor: theme.colors.borderMedium,
     },
     tabButton: {
         flex: 1,
@@ -345,11 +416,7 @@ const styles = StyleSheet.create({
         gap: 6,
         paddingVertical: 8,
         borderRadius: theme.borderRadius.md,
-    },
-    tabButtonActive: {
-        backgroundColor: theme.colors.surfaceElevated,
-        borderWidth: 1,
-        borderColor: theme.colors.borderMedium,
+        zIndex: 1,
     },
     tabButtonText: {
         color: theme.colors.textMuted,
@@ -362,6 +429,10 @@ const styles = StyleSheet.create({
     },
     modalBody: {
         flexShrink: 1,
+    },
+    animatedFormWrapper: {
+        flexShrink: 1,
+        width: '100%',
     },
     alertaErroModal: {
         flexShrink: 0,

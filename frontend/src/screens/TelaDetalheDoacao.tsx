@@ -31,11 +31,13 @@ interface SecaoPontoDoacaoProps {
     erro: ApiError | null;
     carregando: boolean;
     pontoId?: number;
+    onVerPonto?: (pontoId: number) => void;
 }
 
 interface LinhaInfoProps {
     label: string;
     valor?: string | number;
+    icone?: any;
     temDivisor?: boolean;
 }
 
@@ -61,23 +63,23 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
     const estaOcupado = statusAcao !== 'idle';
 
     const carregarDadosCompletos = useCallback(async () => {
-        const doacaoApi = await buscarDoacaoPorId(doacaoId)
+        const doacaoApi = await buscarDoacaoPorId(doacaoId);
         setDoacao(doacaoApi);
         setErro(null);
 
         if (doacaoApi.pontoId) {
             try {
                 setCarregandoPonto(true);
-                const pontoApi = await buscarPontoPorId(doacaoApi.pontoId)
-                setPonto(pontoApi)
-                setErroPonto(null)
+                const pontoApi = await buscarPontoPorId(doacaoApi.pontoId);
+                setPonto(pontoApi);
+                setErroPonto(null);
             } catch (errPonto) {
                 setErroPonto(errPonto instanceof ApiError ? errPonto : new ApiError(-1, 'Erro ao buscar ponto'));
             } finally {
                 setCarregandoPonto(false);
             }
         }
-    }, [doacaoId])
+    }, [doacaoId]);
 
     useFocusEffect(
         useCallback(() => {
@@ -116,8 +118,9 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
             if (doacao) {
                 Toast.show({
                     type: 'error',
-                    text1: getMensagemErro(err, { fallback: 'Não foi possível atualizar os detalhes da doação.' }),
+                    text1: getMensagemErro(err, {fallback: 'Não foi possível atualizar os detalhes da doação.'}),
                     position: 'bottom',
+                    bottomOffset: paddingInferior + 25,
                 });
             } else {
                 setErro(apiError);
@@ -125,7 +128,7 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
         } finally {
             setAtualizando(false);
         }
-    }, [carregarDadosCompletos, doacao]);
+    }, [carregarDadosCompletos, doacao, paddingInferior]);
 
     async function onConfirmEditar(novaDoacao: DoacaoCadastro) {
         if (!novaDoacao || !doacao) return;
@@ -135,10 +138,26 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
             const doacaoApi = await atualizarDoacao(doacao.id, novaDoacao);
             setDoacao(doacaoApi);
             navigation.setParams({doacaoId: doacaoApi.id});
+
+            if (doacaoApi.pontoId && doacaoApi.pontoId !== ponto?.id) {
+                try {
+                    setCarregandoPonto(true);
+                    const pontoApi = await buscarPontoPorId(doacaoApi.pontoId);
+                    setPonto(pontoApi);
+                    setErroPonto(null);
+                } catch (errPonto) {
+                    setErroPonto(errPonto instanceof ApiError ? errPonto : new ApiError(-1, 'Erro ao buscar ponto'));
+                } finally {
+                    setCarregandoPonto(false);
+                }
+            }
+
             Toast.show({
                 type: 'success',
-                text1: 'Doação editada com sucesso.',
-            })
+                text1: 'Doação atualizada com sucesso.',
+                position: 'bottom',
+                bottomOffset: paddingInferior + 25,
+            });
         } catch (error) {
             throw error;
         } finally {
@@ -153,24 +172,27 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
             setStatusAcao('excluindo');
             await deletarDoacao(doacao.id);
             Toast.show({
-                type: "success",
+                type: 'success',
                 text1: 'Doação excluída com sucesso.',
-                bottomOffset: paddingInferior + 25
-            })
+                position: 'bottom',
+                bottomOffset: paddingInferior + 25,
+            });
             try {
                 navigation.reset({
                     index: 0,
                     routes: [{name: 'Abas', params: {screen: 'Doações'}}],
                 });
-            } catch (error) {
+            } catch {
                 navigation.goBack();
             }
-        } catch (error) {
+        } catch {
             setStatusAcao('idle');
             Toast.show({
                 type: "error",
-                text1: getMensagemErro(error, {fallback: 'Ocorreu um erro ao excluir a doação.'})
-            })
+                text1: 'Ocorreu um erro ao excluir a doação.',
+                position: 'bottom',
+                bottomOffset: paddingInferior + 25,
+            });
         }
     }
 
@@ -259,12 +281,6 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
                     naoEncontrado="Doação não encontrada."
                     fallback="Não foi possível carregar os detalhes da doação."
                 />
-                <Pressable
-                    style={({pressed}) => [styles.botaoVoltar, pressed && styles.botaoPressionado]}
-                    onPress={() => navigation.goBack()}
-                >
-                    <Text style={styles.botaoVoltarTexto}>Voltar</Text>
-                </Pressable>
             </View>
         );
     }
@@ -295,43 +311,33 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
             />
 
             <View style={styles.conteudoCentral}>
-                <View style={styles.heroCard}>
-                    <View style={styles.heroIconWrapper}>
-                        <MaterialDesignIcons
-                            name="hand-heart"
-                            size={36}
-                            color={theme.colors.primaryVibrant}
-                        />
-                    </View>
-
-                    <Text style={styles.heroNome}>{doacao.tipoItem}</Text>
-
-                    <View style={styles.heroBadges}>
-                        <View style={styles.badgeQtd}>
-                            <MaterialDesignIcons
-                                name="package-variant-closed"
-                                size={14}
-                                color={theme.colors.primaryVibrant}
-                            />
-                            <Text style={styles.badgeQtdTexto}>
-                                {doacao.quantidade} {doacao.quantidade === 1 ? 'item' : 'itens'}
-                            </Text>
-                        </View>
-
-                        <View style={styles.badgeCodigo}>
-                            <Text style={styles.badgeCodigoTexto}>#{doacao.id}</Text>
-                        </View>
-                    </View>
-                </View>
-
                 <View style={styles.secao}>
                     <Text style={styles.secaoTitulo}>INFORMAÇÕES DA DOAÇÃO</Text>
                     <View style={styles.card}>
-                        <LinhaInfo label="Item:" valor={doacao.tipoItem}/>
-                        <LinhaInfo label="Quantidade:"
-                                   valor={`${doacao.quantidade} ${doacao.quantidade === 1 ? 'unidade' : 'unidades'}`}/>
-                        <LinhaInfo label="Data de Registro:" valor={dataFormatada}/>
-                        <LinhaInfo label="Identificador:" valor={`#${doacao.id}`} temDivisor={false}/>
+                        <View style={styles.headerIntegrado}>
+                            <View style={styles.headerIntegradoIcone}>
+                                <MaterialDesignIcons
+                                    name="hand-heart-outline"
+                                    size={22}
+                                    color={theme.colors.primaryVibrant}
+                                />
+                            </View>
+                            <Text style={styles.headerIntegradoNome} numberOfLines={2}>
+                                {doacao.tipoItem}
+                            </Text>
+                        </View>
+                        <View style={styles.divisor}/>
+                        <LinhaInfo
+                            label="Quantidade:"
+                            valor={`${doacao.quantidade} ${doacao.quantidade === 1 ? 'unidade' : 'unidades'}`}
+                            icone="package-variant-closed"
+                        />
+                        <LinhaInfo
+                            label="Data de Registro:"
+                            valor={dataFormatada}
+                            icone="calendar-clock-outline"
+                            temDivisor={false}
+                        />
                     </View>
                 </View>
 
@@ -340,6 +346,7 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
                     erro={erroPonto}
                     carregando={carregandoPonto}
                     pontoId={doacao.pontoId}
+                    onVerPonto={(id) => navigation.navigate('TelaDetalhePonto', {pontoId: id})}
                 />
 
                 <View style={styles.secaoBotao}>
@@ -393,32 +400,35 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
     );
 }
 
-function LinhaInfo({label, valor, temDivisor = true}: LinhaInfoProps) {
+function LinhaInfo({label, valor, icone, temDivisor = true}: LinhaInfoProps) {
     return (
         <>
-            <View style={styles.campoLinha}>
-                <Text style={styles.campoLabel}>{label}</Text>
-                <Text style={styles.campoValor}>{valor}</Text>
+            <View style={styles.linhaInfo}>
+                {icone && (
+                    <MaterialDesignIcons name={icone} size={18} color={theme.colors.primaryVibrant}
+                                         style={{marginTop: 2}}/>
+                )}
+                <View style={styles.linhaConteudo}>
+                    <Text style={styles.linhaLabel}>{label}</Text>
+                    <Text style={styles.linhaValor}>{valor ?? '-'}</Text>
+                </View>
             </View>
             {temDivisor && <View style={styles.divisor}/>}
         </>
     );
 }
 
-function SecaoPontoDoacao({ponto, erro, carregando, pontoId}: SecaoPontoDoacaoProps) {
+function SecaoPontoDoacao({ponto, erro, carregando, pontoId, onVerPonto}: SecaoPontoDoacaoProps) {
     return (
         <View style={styles.secao}>
             <Text style={styles.secaoTitulo}>PONTO DE DESTINO</Text>
             <View style={styles.card}>
                 <View style={styles.pontoCabecalho}>
-                    <MaterialDesignIcons name="map-marker" size={20} color={theme.colors.primaryVibrant}/>
-                    <Text style={styles.pontoNome}>
-                        {ponto ? ponto.nome : `Ponto #${pontoId}`}
+                    <MaterialDesignIcons name="map-marker-outline" size={22} color={theme.colors.primaryVibrant}/>
+                    <Text style={styles.pontoNome} numberOfLines={2}>
+                        {ponto ? ponto.nome : `Ponto de coleta`}
                     </Text>
                 </View>
-
-                <Text style={styles.pontoIdTexto}>ID do Ponto: #{pontoId}</Text>
-
                 {carregando && !ponto && (
                     <View style={styles.pontoEstadoContainer}>
                         <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
@@ -453,14 +463,41 @@ function SecaoPontoDoacao({ponto, erro, carregando, pontoId}: SecaoPontoDoacaoPr
                 {ponto && (
                     <>
                         <View style={styles.divisor}/>
-                        <Text style={styles.pontoSublabel}>Endereço</Text>
-                        <Text style={styles.pontoSubvalor}>{ponto.endereco}</Text>
+                        <LinhaInfo
+                            label="Endereço:"
+                            valor={ponto.bairro ? `${ponto.endereco} • ${ponto.bairro}` : ponto.endereco}
+                            icone="map-marker-outline"
+                        />
+                        <LinhaInfo
+                            label="Dias e Horários:"
+                            valor={ponto.horario}
+                            icone="clock-outline"
+                            temDivisor={false}
+                        />
 
-                        <Text style={styles.pontoSublabel}>Dias e Horários</Text>
-                        <Text style={styles.pontoSubvalor}>{ponto.horario}</Text>
-
-                        <Text style={styles.pontoSublabel}>Atendimento</Text>
-                        <Text style={styles.pontoSubvalor}>{ponto.tipo}</Text>
+                        {onVerPonto && (
+                            <>
+                                <View style={styles.divisor}/>
+                                <View style={styles.pontoRodapeAcoes}>
+                                    <Pressable
+                                        style={({pressed}) => [
+                                            styles.botaoVerPonto,
+                                            pressed && styles.botaoVerPontoPressionado
+                                        ]}
+                                        onPress={() => onVerPonto(ponto.id)}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Ver detalhes do ponto"
+                                    >
+                                        <Text style={styles.botaoVerPontoTexto}>Ver detalhes do ponto</Text>
+                                        <MaterialDesignIcons
+                                            name="chevron-right"
+                                            size={18}
+                                            color={theme.colors.primaryVibrant}
+                                        />
+                                    </Pressable>
+                                </View>
+                            </>
+                        )}
                     </>
                 )}
             </View>
@@ -529,73 +566,26 @@ const styles = StyleSheet.create({
     headerBotaoDesabilitado: {
         opacity: 0.4,
     },
-    heroCard: {
-        backgroundColor: theme.colors.cardBackground,
-        borderRadius: theme.borderRadius.xl,
-        borderWidth: 1,
-        borderColor: theme.colors.cardBorder,
-        padding: theme.spacing['2xl'],
+    headerIntegrado: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: theme.spacing['2xl'],
-        ...Platform.select({
-            ios: {
-                shadowColor: theme.colors.shadow,
-                shadowOffset: {width: 0, height: 4},
-                shadowOpacity: 0.2,
-                shadowRadius: 8,
-            },
-            android: {
-                elevation: 3,
-            },
-        }),
+        gap: theme.spacing.md,
+        paddingBottom: theme.spacing.xs,
     },
-    heroIconWrapper: {
-        width: 68,
-        height: 68,
-        borderRadius: 34,
+    headerIntegradoIcone: {
+        width: 40,
+        height: 40,
+        borderRadius: 10,
         backgroundColor: theme.colors.iconSurface,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: theme.spacing.md,
     },
-    heroNome: {
-        fontSize: theme.fontSize['3xl'],
+    headerIntegradoNome: {
+        flex: 1,
+        fontSize: theme.fontSize.lg,
         fontWeight: 'bold',
         color: theme.colors.textWhite,
-        textAlign: 'center',
-        marginBottom: theme.spacing.md,
-    },
-    heroBadges: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: theme.spacing.sm,
-    },
-    badgeQtd: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: theme.colors.primaryLight,
-        paddingHorizontal: theme.spacing.md,
-        paddingVertical: theme.spacing.xs,
-        borderRadius: theme.borderRadius.full,
-    },
-    badgeQtdTexto: {
-        color: theme.colors.primaryVibrant,
-        fontSize: theme.fontSize.sm,
-        fontWeight: '700',
-    },
-    badgeCodigo: {
-        backgroundColor: theme.colors.surfaceElevated,
-        paddingHorizontal: theme.spacing.md,
-        paddingVertical: theme.spacing.xs,
-        borderRadius: theme.borderRadius.full,
-        borderWidth: 1,
-        borderColor: theme.colors.borderSubtle,
-    },
-    badgeCodigoTexto: {
-        color: theme.colors.textMuted,
-        fontSize: theme.fontSize.xs,
-        fontWeight: '600',
+        lineHeight: 24,
     },
     secao: {
         marginBottom: theme.spacing['2xl'],
@@ -603,10 +593,10 @@ const styles = StyleSheet.create({
     secaoTitulo: {
         fontSize: theme.fontSize.xs,
         fontWeight: '700',
-        letterSpacing: 1,
+        letterSpacing: 0.8,
         color: theme.colors.textMuted,
-        marginBottom: theme.spacing.sm,
-        marginLeft: theme.spacing.xs,
+        marginBottom: theme.spacing.md,
+        paddingHorizontal: theme.spacing.xs,
     },
     card: {
         backgroundColor: theme.colors.cardBackground,
@@ -614,41 +604,43 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: theme.colors.cardBorder,
         padding: theme.spacing['2xl'],
-        ...Platform.select({
-            ios: {
-                shadowColor: theme.colors.shadow,
-                shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-            },
-            android: {
-                elevation: 1,
-            },
-        }),
     },
-    campoLinha: {
+    linhaInfo: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'flex-start',
+        gap: theme.spacing.md,
         paddingVertical: theme.spacing.xs,
     },
-    campoLabel: {
-        fontSize: theme.fontSize.md,
-        color: theme.colors.textMuted,
-        fontWeight: '500',
+    linhaConteudo: {
+        flex: 1,
     },
-    campoValor: {
+    linhaLabel: {
+        fontSize: theme.fontSize.xs,
+        color: theme.colors.textMuted,
+        marginBottom: 2,
+    },
+    linhaValor: {
         fontSize: theme.fontSize.md,
-        color: theme.colors.text,
-        fontWeight: '600',
-        flexShrink: 1,
-        textAlign: 'right',
-        marginLeft: theme.spacing.md,
+        color: theme.colors.textWhite,
+        fontWeight: '500',
+        lineHeight: 20,
     },
     divisor: {
         height: 1,
         backgroundColor: theme.colors.borderSubtle,
         marginVertical: theme.spacing.md,
+    },
+    pontoCabecalho: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: theme.spacing.sm,
+    },
+    pontoNome: {
+        flex: 1,
+        fontSize: theme.fontSize.lg,
+        fontWeight: 'bold',
+        color: theme.colors.textWhite,
+        lineHeight: 24,
     },
     pontoEstadoContainer: {
         flexDirection: 'row',
@@ -673,35 +665,27 @@ const styles = StyleSheet.create({
         color: theme.colors.textMuted,
         marginTop: 2,
     },
-
-    pontoCabecalho: {
+    pontoRodapeAcoes: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        marginTop: 2,
+    },
+    botaoVerPonto: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: theme.spacing.sm,
+        justifyContent: 'flex-end',
+        paddingVertical: 4,
     },
-    pontoNome: {
-        fontSize: theme.fontSize.xl,
-        fontWeight: 'bold',
-        color: theme.colors.textWhite,
-        flex: 1,
+    botaoVerPontoPressionado: {
+        opacity: 0.6,
     },
-    pontoIdTexto: {
-        fontSize: theme.fontSize.xs,
-        color: theme.colors.textMuted,
-        marginTop: 4,
-        marginLeft: 28,
-    },
-    pontoSublabel: {
-        fontSize: theme.fontSize.xs,
-        fontWeight: '700',
+    botaoVerPontoTexto: {
         color: theme.colors.primaryVibrant,
-        marginTop: theme.spacing.md,
-        marginBottom: 2,
-    },
-    pontoSubvalor: {
-        fontSize: theme.fontSize.md,
-        color: theme.colors.textSecondary,
-        lineHeight: 20,
+        fontSize: theme.fontSize.sm,
+        fontWeight: '600',
+        includeFontPadding: false,
+        textAlignVertical: 'center',
     },
     secaoBotao: {
         marginTop: theme.spacing.md,
@@ -759,27 +743,5 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: theme.spacing['2xl'],
-    },
-    textoErro: {
-        fontSize: theme.fontSize.xl,
-        color: theme.colors.textMuted,
-        marginTop: theme.spacing.md,
-        marginBottom: theme.spacing['2xl'],
-    },
-    botaoVoltar: {
-        backgroundColor: theme.colors.surfaceElevated,
-        paddingHorizontal: theme.spacing['2xl'],
-        paddingVertical: theme.spacing.md,
-        borderRadius: theme.borderRadius.lg,
-        minHeight: 44,
-        justifyContent: 'center'
-    },
-    botaoVoltarTexto: {
-        color: theme.colors.text,
-        fontSize: theme.fontSize.md,
-        fontWeight: '600',
-    },
-    botaoPressionado: {
-        opacity: 0.7,
     },
 });

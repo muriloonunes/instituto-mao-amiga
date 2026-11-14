@@ -4,7 +4,7 @@ import {Pressable, StyleSheet, Text, View} from "react-native";
 import {theme} from "../theme/theme";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 
-export function CardItem({ponto, onPress}: { ponto: Ponto; onPress: () => void }) {
+export function CardPonto({ponto, onPress}: { ponto: Ponto; onPress: () => void }) {
     const enderecoCompleto = ponto.bairro
         ? `${ponto.endereco} • ${ponto.bairro}`
         : ponto.endereco;

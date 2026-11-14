@@ -153,13 +153,13 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     badgeTotalItens: {
-        backgroundColor: theme.colors.primaryLight,
+        backgroundColor: 'rgba(45, 212, 191, 0.14)',
         paddingHorizontal: theme.spacing.md,
         paddingVertical: theme.spacing.xs,
         borderRadius: theme.borderRadius.full,
     },
     badgeTotalItensTexto: {
-        color: theme.colors.primaryVibrant,
+        color: '#2dd4bf',
         fontSize: theme.fontSize.xs,
         fontWeight: '700',
     },

@@ -9,16 +9,19 @@ interface CardDoacaoProps {
     onPress: () => void;
 }
 
-export function CardDoacao({ doacao, nomePonto, onPress }: CardDoacaoProps)  {
-    const dataFormatada = new Date(doacao.criadoEm).toLocaleDateString();
+export function CardDoacao({ doacao, nomePonto, onPress }: CardDoacaoProps) {
+    const dataFormatada = new Date(doacao.criadoEm).toLocaleDateString('pt-BR');
 
     return (
-        <Pressable style={styles.card} onPress={onPress}>
+        <Pressable
+            style={({pressed}) => [styles.card, pressed && styles.cardPressed]}
+            onPress={onPress}
+        >
             <View style={styles.header}>
                 <View style={styles.itemInfo}>
                     <View style={styles.iconWrapper}>
                         <MaterialDesignIcons
-                            name="heart-outline"
+                            name="hand-heart-outline"
                             size={18}
                             color={theme.colors.primaryVibrant}
                         />
@@ -33,13 +36,15 @@ export function CardDoacao({ doacao, nomePonto, onPress }: CardDoacaoProps)  {
                     </Text>
                 </View>
             </View>
+
             <View style={styles.divisor}/>
+
             <View style={styles.footer}>
                 <View style={styles.metaRow}>
                     <MaterialDesignIcons
                         name="map-marker-outline"
-                        size={16}
-                        color={nomePonto ? theme.colors.primaryVibrant : theme.colors.textMuted}
+                        size={15}
+                        color={theme.colors.textMuted}
                     />
                     <Text style={styles.metaText} numberOfLines={1}>
                         {nomePonto ?? 'Ponto não identificado'}
@@ -48,7 +53,7 @@ export function CardDoacao({ doacao, nomePonto, onPress }: CardDoacaoProps)  {
                 <View style={styles.metaRow}>
                     <MaterialDesignIcons
                         name="calendar-outline"
-                        size={16}
+                        size={15}
                         color={theme.colors.textMuted}
                     />
                     <Text style={styles.metaText}>
@@ -57,7 +62,7 @@ export function CardDoacao({ doacao, nomePonto, onPress }: CardDoacaoProps)  {
                 </View>
             </View>
         </Pressable>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
@@ -68,6 +73,10 @@ const styles = StyleSheet.create({
         borderColor: theme.colors.cardBorder,
         padding: theme.spacing['2xl'],
         marginBottom: theme.spacing['2xl'],
+    },
+    cardPressed: {
+        opacity: 0.85,
+        transform: [{scale: 0.99}],
     },
     header: {
         flexDirection: 'row',
@@ -96,14 +105,14 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     badgeQtd: {
-        backgroundColor: theme.colors.primaryLight,
+        backgroundColor: 'rgba(45, 212, 191, 0.14)',
         paddingHorizontal: theme.spacing.md,
-        paddingVertical: theme.spacing.xs,
+        paddingVertical: 3,
         borderRadius: theme.borderRadius.full,
     },
     badgeQtdText: {
-        color: theme.colors.primaryVibrant,
-        fontSize: theme.fontSize.sm,
+        color: '#2dd4bf',
+        fontSize: 11,
         fontWeight: '700',
     },
     divisor: {
@@ -117,7 +126,7 @@ const styles = StyleSheet.create({
     metaRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
+        gap: 8,
     },
     metaText: {
         fontSize: theme.fontSize.sm,
