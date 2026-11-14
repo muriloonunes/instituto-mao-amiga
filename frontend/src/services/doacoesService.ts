@@ -27,7 +27,7 @@ export async function criarDoacao(doacao: DoacaoCadastro): Promise<Doacao> {
     return post<Doacao>('/doacoes', doacao);
 }
 
-export async function atualizarDoacao(id: number, doacao: Doacao): Promise<Doacao> {
+export async function atualizarDoacao(id: number, doacao: DoacaoCadastro): Promise<Doacao> {
     return put<Doacao>(`/doacoes/${id}`, doacao);
 }
 

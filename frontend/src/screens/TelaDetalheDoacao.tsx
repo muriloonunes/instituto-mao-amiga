@@ -12,8 +12,8 @@ import {
 } from 'react-native';
 import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import {theme} from '../theme/theme';
-import {Doacao} from '../types/doacao';
-import {atualizarDoacao, excluirDoacao} from '../services/doacoesStorage';
+import {Doacao, DoacaoCadastro} from '../types/doacao';
+import {excluirDoacao} from '../services/doacoesStorage';
 import {ModalCadastro} from "../components/ModalCadastro";
 import {ApiError} from "../types/api";
 import {buscarPontoPorId} from "../services/pontosService";
@@ -23,6 +23,7 @@ import Toast from "react-native-toast-message";
 import {getMensagemErro} from "../utils/erros";
 import {TelaDetalheDoacaoProps} from "../types/navigation";
 import {StatusAcao} from "../types/utils";
+import {atualizarDoacao} from "../services/doacoesService";
 
 interface SecaoPontoDoacaoProps {
     ponto: Ponto | null;
@@ -117,17 +118,20 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
         }, [carregarPonto])
     );
 
-    async function onConfirmEditar(novaDoacao: Doacao) {
-        if (!novaDoacao) return;
+    async function onConfirmEditar(novaDoacao: DoacaoCadastro) {
+        if (!novaDoacao || !doacao) return;
 
         try {
             setStatusAcao('editando');
-            await atualizarDoacao(novaDoacao);
-            setDoacao(novaDoacao);
-            navigation.setParams({doacao: novaDoacao});
-            setModalEditarVisivel(false);
-        } catch {
-            Alert.alert('Erro', 'Não foi possível editar a doação.');
+            const doacaoApi = await atualizarDoacao(doacao.id, novaDoacao);
+            setDoacao(doacaoApi);
+            navigation.setParams({doacao: doacaoApi});
+            Toast.show({
+                type: 'success',
+                text1: 'Doação editada com sucesso.',
+            })
+        } catch (error) {
+            throw error;
         } finally {
             setStatusAcao('idle');
         }
