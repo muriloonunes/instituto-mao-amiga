@@ -86,12 +86,36 @@ A API estará disponível em: **`http://localhost:8080`**
 
 | Método | URL Completa | Descrição | Status Sucesso | Status Erros |
 | :---: | :--- | :--- | :---: | :---: |
-| `GET` | `http://localhost:8080/api/v1/doacoes` | Lista todas as doações cadastradas | `200 OK` | - |
+| `GET` | `http://localhost:8080/api/v1/doacoes/filtro` | Busca paginada filtrando por tipo de item (`?filtro=...&page=0&size=10&sort=criadoEm,desc`) | `200 OK` | - |
 | `GET` | `http://localhost:8080/api/v1/doacoes/{id}` | Busca os detalhes de uma doação por ID | `200 OK` | `404 Not Found` |
-| `GET` | `http://localhost:8080/api/v1/doacoes/tipo/{tipoItem}` | Filtra doações por tipo de item | `200 OK` | - |
-| `POST` | `http://localhost:8080/api/v1/doacoes` | Registra uma nova doação | `200 OK` | `400 Bad Request` |
-| `PUT` | `http://localhost:8080/api/v1/doacoes/{id}` | Atualiza uma doação existente | `200 OK` | `400 / 404` |
+| `POST` | `http://localhost:8080/api/v1/doacoes` | Registra uma nova doação com validação Bean Validation | `200 OK` | `400 Bad Request`<br>`404 Not Found` |
+| `PUT` | `http://localhost:8080/api/v1/doacoes/{id}` | Atualiza uma doação existente | `200 OK` | `400 Bad Request`<br>`404 Not Found` |
 | `DELETE` | `http://localhost:8080/api/v1/doacoes/{id}` | Remove uma doação por ID | `204 No Content` | `404 Not Found` |
+
+#### Payload de Envio (`DoacaoRequestDTO`):
+> `tipoItem` e `pontoId` obrigatórios; `quantidade` obrigatória e maior que zero (`@Positive`).
+```json
+{
+  "tipoItem": "Cesta Básica",
+  "quantidade": 5,
+  "pontoId": 1
+}
+```
+
+#### Payload de Resposta (`DoacaoResponseDTO`):
+```json
+{
+  "id": 1,
+  "tipoItem": "Cesta Básica",
+  "quantidade": 5,
+  "criadoEm": "2026-11-13T19:14:00Z",
+  "pontoId": 1,
+  "pontoNome": "Sesc Faiçalville",
+  "pontoEndereco": "Av. Ipanema, Qd. 234/236, 1600",
+  "pontoDiasHorarios": "Segunda a Sexta das 08:00 às 17:00",
+  "pontoFuncionamento": "coleta"
+}
+```
 
 ---
 
@@ -103,65 +127,119 @@ Abaixo constam as capturas de tela demonstrando a execução de cada endpoint di
 
 ---
 
-### 1. Busca de Ponto por ID (`GET /api/v1/pontos/{id}`) — Status 200 OK
+### 📍 Pontos de Coleta
+
+#### 1. Busca de Ponto por ID (`GET /api/v1/pontos/{id}`) — Status 200 OK
 Retorna os detalhes completos do ponto correspondente ao ID informado.
 
 ![GET /api/v1/pontos/{id}](docs/swagger/1-get-ponto-por-id.png)
 
 ---
 
-### 2. Busca Paginada sem Filtro (`GET /api/v1/pontos/filtro?page=0&size=10`) — Status 200 OK
+#### 2. Busca Paginada sem Filtro (`GET /api/v1/pontos/filtro?page=0&size=10`) — Status 200 OK
 Retorna a listagem paginada (10 itens por página) ordenada por nome, com a estrutura serializada em `content` e `page`.
 
 ![GET /api/v1/pontos/filtro sem filtro](docs/swagger/2-get-pontos-sem-filtro.png)
 
 ---
 
-### 3. Cadastro de Ponto (`POST /api/v1/pontos`) — Status 200 OK
+#### 3. Cadastro de Ponto (`POST /api/v1/pontos`) — Status 200 OK
 Cria um novo ponto a partir dos dados validados no `PontoRequestDTO`.
 
 ![POST /api/v1/pontos](docs/swagger/3-post-ponto-sucesso.png)
 
 ---
 
-### 4. Edição de Ponto (`PUT /api/v1/pontos/{id}`) — Status 200 OK
+#### 4. Edição de Ponto (`PUT /api/v1/pontos/{id}`) — Status 200 OK
 Atualiza os atributos do ponto existente pelo ID informado.
 
 ![PUT /api/v1/pontos/{id}](docs/swagger/4-put-ponto-sucesso.png)
 
 ---
 
-### 5. Exclusão de Ponto (`DELETE /api/v1/pontos/{id}`) — Status 204 No Content
+#### 5. Exclusão de Ponto (`DELETE /api/v1/pontos/{id}`) — Status 204 No Content
 Remove o ponto do banco de dados e retorna código 204 sem corpo.
 
 ![DELETE /api/v1/pontos/{id}](docs/swagger/5-delete-ponto-sucesso.png)
 
 ---
 
-### 6. Campo Obrigatório Vazio (`POST /api/v1/pontos`) — Status 400 Bad Request
+#### 6. Campo Obrigatório Vazio (`POST /api/v1/pontos`) — Status 400 Bad Request
 Demonstração do Bean Validation (`@Valid` e `@NotBlank`): ao enviar qualquer campo obrigatório em branco (ex: `"nome": ""`), a API rejeita a requisição com **400 Bad Request** e nenhuma informação é persistida no banco.
 
 ![Erro 400 Bad Request](docs/swagger/6-erro-400-validacao.png)
 
 ---
 
-### 7. ID Inexistente (`GET /api/v1/pontos/{id}`) — Status 404 Not Found
+#### 7. ID Inexistente (`GET /api/v1/pontos/{id}`) — Status 404 Not Found
 Demonstração do tratamento de exceção (`EntityNotFound` via `GlobalExceptionHandler`): ao consultar ou atualizar um ID que não existe no banco, a API responde prontamente com **404 Not Found**.
 
 ![Erro 404 Not Found](docs/swagger/7-erro-404-nao-encontrado.png)
 
 ---
 
-### 8. Busca com Filtro por Bairro ou Nome (`GET /api/v1/pontos/filtro?filtro=...&page=0&size=10`) — Status 200 OK
+#### 8. Busca com Filtro por Bairro ou Nome (`GET /api/v1/pontos/filtro?filtro=...&page=0&size=10`) — Status 200 OK
 Filtra os pontos comparando case-insensitive com nome ou bairro via query customizada no repositório.
 
 ![GET /api/v1/pontos/filtro com filtro](docs/swagger/8-get-pontos-com-filtro.png)
 
 ---
 
-### 9. Busca Paginada - Segunda Página (`GET /api/v1/pontos/filtro?page=1&size=10`) — Status 200 OK
+#### 9. Busca Paginada - Segunda Página (`GET /api/v1/pontos/filtro?page=1&size=10`) — Status 200 OK
 Navegação para a página subsequente (`page=1`), demonstrando a paginação e a quantidade total de registros da carga inicial (mais de 25 pontos).
 
 ![GET /api/v1/pontos/filtro segunda página](docs/swagger/9-get-pontos-segunda-pagina.png)
+
+---
+
+### 🎁 Doações
+
+#### 10. Busca de Doação por ID (`GET /api/v1/doacoes/{id}`) — Status 200 OK
+Consulta os detalhes completos de uma doação por ID.
+
+![GET /api/v1/doacoes/{id}](docs/swagger/10-get-doacao-por-id.png)
+
+---
+
+#### 11. Busca Paginada de Doações (`GET /api/v1/doacoes/filtro?page=0&size=10`) — Status 200 OK
+Listagem paginada ordenada da doação mais recente para a mais antiga (`criadoEm,desc`).
+
+![GET /api/v1/doacoes/filtro](docs/swagger/11-get-doacoes-sem-filtro.png)
+
+---
+
+#### 12. Cadastro de Doação com Sucesso (`POST /api/v1/doacoes`) — Status 200 OK
+Registra nova doação associada ao ponto de coleta informado.
+
+![POST /api/v1/doacoes](docs/swagger/12-post-doacao-sucesso.png)
+
+---
+
+#### 13. Edição de Doação (`PUT /api/v1/doacoes/{id}`) — Status 200 OK
+Atualiza os atributos de uma doação existente mantendo o `criadoEm` original intacto.
+
+![PUT /api/v1/doacoes/{id}](docs/swagger/13-put-atualizacao-sucesso.png)
+
+---
+
+#### 14. Exclusão de Doação (`DELETE /api/v1/doacoes/{id}`) — Status 204 No Content
+Remove a doação do banco com código 204.
+
+![DELETE /api/v1/doacoes/{id}](docs/swagger/14-delete-doacao-sucesso.png)
+
+---
+
+#### 15. Validação com Erro de Negócio (`POST /api/v1/doacoes`) — Status 400 Bad Request
+Rejeição imediata por Bean Validation ao tentar registrar doação com quantidade zero/negativa ou tipo vazio (`@Positive` / `@NotBlank`), sem gravar nada no banco.
+
+![Erro 400 Doação](docs/swagger/15-post-doacao-erro-400.png)
+
+---
+
+#### 16. Doação Inexistente (`GET /api/v1/doacoes/{id}`) — Status 404 Not Found
+Tratamento de ID inexistente com resposta 404 via `EntityNotFound`.
+
+![Erro 404 Doação](docs/swagger/16-get-doacao-erro-404.png)
+
 
 

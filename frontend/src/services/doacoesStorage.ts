@@ -1,5 +1,5 @@
 import {Doacao} from "../types/doacao";
-import {lerJSON, salvarJSON} from "./storage";
+import {lerJSON, removerItem, salvarJSON} from "./storage";
 
 const CHAVE_DOACOES = '@mao_amiga:doacoes';
 
@@ -36,4 +36,8 @@ export const excluirDoacao = async (id: number): Promise<Doacao[]> => {
     }
     await salvarJSON(CHAVE_DOACOES, doacoesAtualizadas);
     return doacoesAtualizadas;
+}
+
+export const limpar = async (): Promise<void> => {
+    await removerItem(CHAVE_DOACOES);
 }

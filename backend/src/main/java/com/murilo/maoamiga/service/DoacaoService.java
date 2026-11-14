@@ -2,12 +2,13 @@ package com.murilo.maoamiga.service;
 
 import com.murilo.maoamiga.entity.Doacao;
 import com.murilo.maoamiga.entity.Ponto;
-import com.murilo.maoamiga.entity.dto.CriarDoacaoDTO;
+import com.murilo.maoamiga.entity.dto.DoacaoRequestDTO;
 import com.murilo.maoamiga.entity.dto.DoacaoResponseDTO;
+import com.murilo.maoamiga.exception.EntityNotFound;
 import com.murilo.maoamiga.repository.DoacaoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  *
@@ -26,7 +27,7 @@ public class DoacaoService {
         this.pontoService = pontoService;
     }
 
-    public DoacaoResponseDTO criar(CriarDoacaoDTO doacaoDto) {
+    public DoacaoResponseDTO criar(DoacaoRequestDTO doacaoDto) {
         Ponto ponto = pontoService.buscarPorId(doacaoDto.pontoId());
         Doacao doacao = new Doacao();
         doacao.setTipoItem(doacaoDto.tipoItem());
@@ -38,26 +39,27 @@ public class DoacaoService {
         return new DoacaoResponseDTO(doacaoSalva);
     }
 
-    public List<DoacaoResponseDTO> listar() {
-        List<Doacao> doacoes = doacaoRepository.findAll();
-        return doacoes.stream().map(DoacaoResponseDTO::new).toList();
+    public Page<DoacaoResponseDTO> listar(Pageable pageable) {
+        Page<Doacao> doacoes = doacaoRepository.findAll(pageable);
+        return doacoes.map(DoacaoResponseDTO::new);
     }
 
-    public List<DoacaoResponseDTO> listarPorTipoItem(String tipoItem) {
-        List<Doacao> doacoes = doacaoRepository.findAllByTipoItemIgnoreCase(tipoItem);
-        return doacoes.stream().map(DoacaoResponseDTO::new).toList();
+    public Page<DoacaoResponseDTO> listarComFiltro(String filtro, Pageable pageable) {
+        Page<Doacao> doacoes = doacaoRepository.listarComFiltro(filtro, pageable);
+        return doacoes.map(DoacaoResponseDTO::new);
     }
+
 
     public DoacaoResponseDTO buscarPorId(Long id) {
         Doacao doacao = doacaoRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Doação não encontrada")
+                () -> new EntityNotFound("Doação não encontrada")
         );
         return new DoacaoResponseDTO(doacao);
     }
 
-    public DoacaoResponseDTO atualizar(Long id, CriarDoacaoDTO doacaoDto) {
+    public DoacaoResponseDTO atualizar(Long id, DoacaoRequestDTO doacaoDto) {
         Doacao doacao = doacaoRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Doação não encontrada")
+                () -> new EntityNotFound("Doação não encontrada")
         );
         Ponto ponto = pontoService.buscarPorId(doacaoDto.pontoId());
         doacao.setTipoItem(doacaoDto.tipoItem());
@@ -71,7 +73,7 @@ public class DoacaoService {
 
     public void deletar(Long id) {
         Doacao doacao = doacaoRepository.findById(id).orElseThrow(
-                () -> new RuntimeException("Doação não encontrada")
+                () -> new EntityNotFound("Doação não encontrada")
         );
         doacaoRepository.delete(doacao);
     }

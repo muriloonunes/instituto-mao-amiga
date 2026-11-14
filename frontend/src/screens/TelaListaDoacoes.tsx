@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from "react";
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {
     ActivityIndicator,
     FlatList,
@@ -8,16 +8,18 @@ import {
     StyleSheet,
     Text,
     useWindowDimensions,
+    View,
 } from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {theme} from "../theme/theme";
 import {Doacao} from "../types/doacao";
 import {CardDoacao} from "../components/CardDoacao";
 import {useFocusEffect, useNavigation} from "@react-navigation/native";
-import {listarDoacoes} from "../services/doacoesStorage";
+import {listarDoacoes} from "../services/doacoesService";
 import {InputPesquisar} from "../components/InputPesquisar";
 import {ResumoDoacoesCard} from "../components/ResumoDoacoesCard";
 import {EmptyState} from "../components/EmptyState";
+import {ErroState} from "../components/ErroState";
 import Donate from "../../assets/svg/donate.svg";
 import NoResult from "../../assets/svg/no-result.svg";
 import {PontoResumo} from "../types/ponto";
@@ -25,6 +27,9 @@ import {listarPontosResumo} from "../services/pontosService";
 import {ApiError} from "../types/api";
 import Toast from "react-native-toast-message";
 import {getMensagemErro} from "../utils/erros";
+import {ehUltimaPagina} from "../services/api";
+
+const TAMANHO_PAGINA = 10;
 
 type TelaListaDoacoesProps = {
     onNovaDoacao?: () => void;
@@ -46,53 +51,147 @@ export function TelaListaDoacoes({onNovaDoacao, atualizacaoKey}: TelaListaDoacoe
 
     const [doacoes, setDoacoes] = useState<Doacao[]>([]);
     const [carregando, setCarregando] = useState(true);
-    const [pontos, setPontos] = useState<PontoResumo[]>([]);
+    const [carregandoMais, setCarregandoMais] = useState(false);
     const [atualizando, setAtualizando] = useState(false);
+    const [erro, setErro] = useState<ApiError | null>(null);
+
+    const [pagina, setPagina] = useState(0);
+    const [ultima, setUltima] = useState(false);
+    const [busca, setBusca] = useState('');
+
+    const [pontos, setPontos] = useState<PontoResumo[]>([]);
     const [erroPontos, setErroPontos] = useState<ApiError | null>(null);
+
+    const buscandoMaisRef = useRef(false);
+    const requestSeqRef = useRef(0);
+    const primeiraMontagemRef = useRef(true);
+    const buscaRef = useRef('');
+    const temDoacoesRef = useRef(false);
+
+    useEffect(() => {
+        buscaRef.current = busca;
+        temDoacoesRef.current = doacoes.length > 0;
+    }, [busca, doacoes]);
+
     const mapaPontos = useMemo(() => {
         return new Map(pontos.map(ponto => [ponto.id, ponto.nome]));
-    }, [pontos])
+    }, [pontos]);
 
-    const carregarDados = useCallback(async () => {
-        const doacoes = await listarDoacoes();
-        setDoacoes(doacoes);
-
+    const carregarPontosReferencia = useCallback(async () => {
         try {
-            const pontos = await listarPontosResumo();
-            setPontos(pontos);
+            const respostaPontos = await listarPontosResumo();
+            setPontos(respostaPontos);
             setErroPontos(null);
         } catch (error) {
             console.error('Falha ao sincronizar pontos na TelaDoacoes:', error);
             const apiError = error instanceof ApiError
                 ? error
                 : new ApiError(-1, 'Erro ao carregar pontos');
-
             setErroPontos(apiError);
-
-            Toast.show({
-                type: 'error',
-                text1: getMensagemErro(error, {
-                    fallback: 'Não foi possível sincronizar os pontos. Verifique sua conexão e tente novamente.',
-                }),
-                position: 'bottom',
-                bottomOffset: paddingInferior + 25,
-            });
         }
-    }, [])
+    }, []);
+
+    const carregarDoacoes = useCallback(async (
+        paginaAlvo: number,
+        termoBusca: string,
+        resetar: boolean = false
+    ) => {
+        const requestId = ++requestSeqRef.current;
+
+        if (resetar && !temDoacoesRef.current) {
+            setCarregando(true);
+        }
+
+        try {
+            const response = await listarDoacoes(
+                termoBusca.trim() || undefined,
+                paginaAlvo,
+                TAMANHO_PAGINA
+            );
+
+            if (requestId !== requestSeqRef.current) return;
+
+            setDoacoes(prev => resetar ? response.content : [...prev, ...response.content]);
+            setPagina(response.page.number);
+            setUltima(ehUltimaPagina(response));
+            setErro(null);
+
+            carregarPontosReferencia();
+        } catch (err) {
+            if (requestId !== requestSeqRef.current) return;
+
+            console.error(err);
+            const apiError = err instanceof ApiError ? err : new ApiError(-1, 'Erro desconhecido');
+
+            if (!resetar && paginaAlvo > 0) {
+                Toast.show({
+                    type: 'error',
+                    text1: getMensagemErro(err, {fallback: 'Não foi possível carregar mais doações.'}),
+                    bottomOffset: paddingInferior + 25
+                });
+            } else {
+                setErro(apiError);
+            }
+        } finally {
+            if (requestId === requestSeqRef.current) {
+                setCarregando(false);
+            }
+        }
+    }, [paddingInferior, carregarPontosReferencia]);
+
+    useEffect(() => {
+        if (atualizacaoKey !== undefined && atualizacaoKey > 0) {
+            setErro(null);
+            carregarDoacoes(0, buscaRef.current, true);
+        }
+    }, [atualizacaoKey, carregarDoacoes]);
+
+    useEffect(() => {
+        if (primeiraMontagemRef.current) {
+            primeiraMontagemRef.current = false;
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setErro(null);
+            await carregarDoacoes(0, busca, true);
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [busca, carregarDoacoes]);
+
+    useFocusEffect(
+        useCallback(() => {
+            if (!buscaRef.current.trim()) {
+                setErro(null);
+                carregarDoacoes(0, '', true);
+            }
+        }, [carregarDoacoes])
+    );
 
     const onRefresh = useCallback(async () => {
         setAtualizando(true);
-        await carregarDados();
-        setAtualizando(false);
-    }, [carregarDados])
+        try {
+            await carregarDoacoes(0, busca, true);
+        } finally {
+            setAtualizando(false);
+        }
+    }, [busca, carregarDoacoes]);
 
-    const [busca, setBusca] = useState('');
-    const doacoesFiltradas = useMemo(() => {
-        const termo = (busca || '').trim().toLowerCase();
-        return doacoes.filter(doacao =>
-            (doacao?.tipoItem ?? '').toLowerCase().includes(termo)
-        );
-    }, [doacoes, busca]);
+    const carregarProximaPagina = useCallback(async () => {
+        if (buscandoMaisRef.current || carregandoMais || carregando || atualizando || ultima || erro) {
+            return;
+        }
+
+        buscandoMaisRef.current = true;
+        setCarregandoMais(true);
+        try {
+            await carregarDoacoes(pagina + 1, busca, false);
+        } finally {
+            setCarregandoMais(false);
+            buscandoMaisRef.current = false;
+        }
+    }, [carregandoMais, carregando, atualizando, ultima, erro, pagina, busca, carregarDoacoes]);
 
     const totalDoacoes = doacoes.length;
 
@@ -123,87 +222,101 @@ export function TelaListaDoacoes({onNovaDoacao, atualizacaoKey}: TelaListaDoacoe
             .sort((a, b) => b.quantidadeTotal - a.quantidadeTotal || a.tipoItem.localeCompare(b.tipoItem));
     }, [doacoes]);
 
-    useFocusEffect(
-        useCallback(() => {
-            let ativo = true;
+    const renderFooter = () => {
+        if (!carregandoMais) return null;
+        return (
+            <View style={styles.footerLoader}>
+                <ActivityIndicator size="small" color={theme.colors.primaryVibrant}/>
+            </View>
+        );
+    };
 
-            async function carregarInicial() {
-                setAtualizando(true);
-                await carregarDados();
-                if (ativo) setCarregando(false);
-            }
+    const renderEmptyComponent = () => {
+        if (erro) {
+            return (
+                <ErroState
+                    erro={erro}
+                    fallback="Não foi possível carregar as doações."
+                />
+            );
+        }
 
-            carregarInicial();
+        if (busca.trim()) {
+            return (
+                <EmptyState
+                    icon={<NoResult width={250} height={250}/>}
+                    mensagem={`Nenhuma doação encontrada para "${busca}"`}
+                    subtitulo="Verifique a ortografia ou tente outro tipo de item."
+                />
+            );
+        }
 
-            return () => {
-                ativo = false;
-            };
-        }, [atualizacaoKey, carregarDados])
-    );
+        if (!carregando) {
+            return (
+                <EmptyState
+                    icon={<Donate width={300} height={180}/>}
+                    mensagem="Nenhuma doação registrada ainda."
+                    subtitulo="Que tal começar a fazer o bem? Registre a primeira doação!"
+                    botaoTexto="Registrar doação"
+                    onBotaoPress={onNovaDoacao}
+                />
+            );
+        }
+
+        return null;
+    };
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.titleText}>
-                Doações
-            </Text>
+            <Text style={styles.titleText}>Doações</Text>
 
-            {carregando ? (
-                <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
-            ) : (
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    style={styles.keyboardContainer}
-                >
-                    {busca.length === 0 && (
-                        <ResumoDoacoesCard resumoDoacoes={resumoDoacoes} totalDoacoes={totalDoacoes}
-                                           totalItens={totalItens}/>
-                    )}
-                    <InputPesquisar placeholder="Buscar doações" busca={busca} setBusca={setBusca}/>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={styles.keyboardContainer}
+            >
+                {busca.length === 0 && doacoes.length > 0 && (
+                    <ResumoDoacoesCard
+                        resumoDoacoes={resumoDoacoes}
+                        totalDoacoes={totalDoacoes}
+                        totalItens={totalItens}
+                    />
+                )}
+
+                <InputPesquisar
+                    placeholder="Buscar por tipo de item"
+                    busca={busca}
+                    setBusca={setBusca}
+                />
+
+                {carregando && doacoes.length === 0 ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={theme.colors.primaryVibrant}/>
+                    </View>
+                ) : (
                     <FlatList
-                        data={doacoesFiltradas}
+                        data={doacoes}
                         keyExtractor={(item) => item.id.toString()}
                         keyboardShouldPersistTaps="handled"
                         keyboardDismissMode="on-drag"
+                        ListEmptyComponent={renderEmptyComponent}
+                        ListFooterComponent={renderFooter}
+                        onEndReached={carregarProximaPagina}
+                        onEndReachedThreshold={0.5}
                         renderItem={({item}) => {
                             const nomeOuStatus = mapaPontos.get(item.pontoId) ?? (
                                 erroPontos
                                     ? 'Ponto indisponível (offline)'
-                                    : 'Ponto não identificado'
+                                    : 'Ponto de coleta'
                             );
 
                             return (
                                 <CardDoacao
                                     doacao={item}
                                     nomePonto={nomeOuStatus}
-                                    onPress={() => navigation.navigate('TelaDetalheDoacao', {doacao: item})}
+                                    onPress={() => navigation.navigate('TelaDetalheDoacao', {doacaoId: item.id})}
                                 />
-                            )
+                            );
                         }}
-                        contentContainerStyle={[
-                            styles.listContent,
-                            doacoes.length === 0 && styles.emptyListContent,
-                            {paddingBottom: paddingInferior},
-                        ]}
-                        ListEmptyComponent={() => (
-                            <EmptyState
-                                icon={doacoes.length === 0
-                                    ? <Donate width={300} height={180}/>
-                                    : <NoResult width={250} height={250}/>
-                                }
-                                mensagem={
-                                    doacoes.length === 0
-                                        ? "Nenhuma doação registrada ainda."
-                                        : "Nenhuma doação encontrada."
-                                }
-                                subtitulo={
-                                    doacoes.length === 0
-                                        ? "Que tal começar a fazer o bem? Registre a primeira doação!"
-                                        : `Não encontramos resultados para "${busca}".`
-                                }
-                                botaoTexto={doacoes.length === 0 ? "Registrar doação" : undefined}
-                                onBotaoPress={doacoes.length === 0 ? onNovaDoacao : undefined}
-                            />
-                        )}
                         refreshControl={
                             <RefreshControl
                                 refreshing={atualizando}
@@ -213,9 +326,14 @@ export function TelaListaDoacoes({onNovaDoacao, atualizacaoKey}: TelaListaDoacoe
                                 tintColor={theme.colors.primaryVibrant}
                             />
                         }
+                        contentContainerStyle={[
+                            styles.listContent,
+                            doacoes.length === 0 && styles.emptyListContent,
+                            {paddingBottom: paddingInferior},
+                        ]}
                     />
-                </KeyboardAvoidingView>
-            )}
+                )}
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -237,10 +355,21 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: theme.spacing['2xl'],
-        flexGrow: 1,
     },
     emptyListContent: {
+        flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    footerLoader: {
+        paddingVertical: theme.spacing.lg,
+        alignItems: 'center',
+        justifyContent: 'center',
     }
 });
+

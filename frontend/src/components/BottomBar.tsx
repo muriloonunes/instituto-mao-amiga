@@ -7,11 +7,11 @@ import {Platform, StyleSheet, useWindowDimensions, View, ViewStyle} from "react-
 import {theme} from "../theme/theme";
 import {BlurView} from "expo-blur";
 import {ModalCadastro} from "./ModalCadastro";
-import {salvarDoacao} from "../services/doacoesStorage";
-import {Doacao} from "../types/doacao";
+import {DoacaoCadastro} from "../types/doacao";
 import {BottomBarFab} from "./BottomBarFab";
 import {PontoCadastro} from "../types/ponto";
 import {criarPonto} from "../services/pontosService";
+import {criarDoacao} from "../services/doacoesService";
 
 const Tab = createBottomTabNavigator();
 
@@ -241,8 +241,8 @@ export function BottomBar() {
                 visible={modalVisible}
                 onClose={() => setModalVisible(false)}
                 abaAberta={abaAtiva}
-                onSaveDoacao={async (doacao: Doacao) => {
-                    await salvarDoacao(doacao);
+                onSaveDoacao={async (doacao: DoacaoCadastro) => {
+                    await criarDoacao(doacao);
                     setAtualizacaoDoacaoKey(prev => prev + 1);
                 }}
                 onSavePonto={async (ponto: PontoCadastro) => {

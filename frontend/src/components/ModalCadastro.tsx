@@ -13,7 +13,7 @@ import {
 import {theme} from "../theme/theme";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import React, {useEffect, useRef, useState} from "react";
-import {Doacao} from "../types/doacao";
+import {Doacao, DoacaoCadastro} from "../types/doacao";
 import {DoacaoCadastroForm, DoacaoFormHandle} from "./DoacaoCadastroForm";
 import {PontoCadastroForm, PontoFormHandle} from "./PontoCadastroForm";
 import {Ponto, PontoCadastro} from "../types/ponto";
@@ -25,7 +25,7 @@ type ModalCadastroProps = {
     onClose: () => void;
     abaAberta: 'Pontos' | 'Doações';
     onSavePonto?: (ponto: PontoCadastro) => Promise<void> | void;
-    onSaveDoacao?: (doacao: Doacao) => Promise<void> | void;
+    onSaveDoacao?: (doacao: DoacaoCadastro) => Promise<void> | void;
     doacaoExistente?: Doacao;
     pontoExistente?: Ponto;
 };
@@ -82,7 +82,7 @@ export function ModalCadastro(
         }
     }
 
-    async function handleSalvarDoacao(doacao: Doacao) {
+    async function handleSalvarDoacao(doacao: DoacaoCadastro) {
         try {
             setSalvando(true);
             setErroSalvar(null);
