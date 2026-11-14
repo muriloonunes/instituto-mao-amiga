@@ -3,7 +3,7 @@ import MaterialDesignIcons from "@react-native-vector-icons/material-design-icon
 import {theme} from "../theme/theme";
 import React, {forwardRef, useEffect, useImperativeHandle, useState} from "react";
 import {Picker} from "@react-native-picker/picker";
-import {Doacao} from "../types/doacao";
+import {Doacao, DoacaoCadastro} from "../types/doacao";
 import {PontoResumo} from "../types/ponto";
 import {listarPontosResumo} from "../services/pontosService";
 import {ApiError} from "../types/api";
@@ -14,7 +14,7 @@ export type DoacaoFormHandle = {
 
 export type DoacaoCadastroFormProps = {
     doacaoExistente?: Doacao;
-    onSave: (doacao: Doacao) => void;
+    onSave: (doacao: DoacaoCadastro) => void;
     onCarregandoChange?: (carregando: boolean) => void;
 };
 
@@ -102,11 +102,9 @@ export const DoacaoCadastroForm = forwardRef<DoacaoFormHandle, DoacaoCadastroFor
             submit() {
                 if (!validar() || carregandoPontos || erroPontos) return;
                 onSave({
-                    id: doacaoExistente ? doacaoExistente.id : Date.now(),
                     tipoItem: tipoItem.trim(),
                     quantidade: Number(qtdItem),
                     pontoId: pontoSelecionadoId!,
-                    criadoEm: doacaoExistente ? doacaoExistente.criadoEm : new Date().toISOString(),
                 });
             }
         }))

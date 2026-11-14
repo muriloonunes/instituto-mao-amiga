@@ -1,5 +1,5 @@
 import {Page} from "../types/api";
-import {Doacao} from "../types/doacao";
+import {Doacao, DoacaoCadastro} from "../types/doacao";
 import {del, get, post, put} from "./api";
 
 export async function listarDoacoes(filtro?: string, page = 0, size = 10, sort?: string): Promise<Page<Doacao>> {
@@ -23,7 +23,7 @@ export async function buscarDoacaoPorId(id: number): Promise<Doacao> {
     return get<Doacao>(`/doacoes/${id}`);
 }
 
-export async function criarDoacao(doacao: Doacao): Promise<Doacao> {
+export async function criarDoacao(doacao: DoacaoCadastro): Promise<Doacao> {
     return post<Doacao>('/doacoes', doacao);
 }
 
