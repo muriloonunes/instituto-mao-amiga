@@ -8,12 +8,12 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    useWindowDimensions,
     View,
 } from 'react-native';
 import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import {theme} from '../theme/theme';
 import {Doacao, DoacaoCadastro} from '../types/doacao';
-import {excluirDoacao} from '../services/doacoesStorage';
 import {ModalCadastro} from "../components/ModalCadastro";
 import {ApiError} from "../types/api";
 import {buscarPontoPorId} from "../services/pontosService";
@@ -23,7 +23,7 @@ import Toast from "react-native-toast-message";
 import {getMensagemErro} from "../utils/erros";
 import {TelaDetalheDoacaoProps} from "../types/navigation";
 import {StatusAcao} from "../types/utils";
-import {atualizarDoacao} from "../services/doacoesService";
+import {atualizarDoacao, deletarDoacao} from "../services/doacoesService";
 
 interface SecaoPontoDoacaoProps {
     ponto: Ponto | null;
@@ -39,6 +39,10 @@ interface LinhaInfoProps {
 }
 
 export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
+    const {width} = useWindowDimensions();
+    const telaLarga = width >= 768;
+    const paddingInferior = telaLarga ? theme.spacing['3xl'] : 40;
+
     const [doacao, setDoacao] = useState<Doacao | undefined>(route?.params.doacao);
     const [ponto, setPonto] = useState<Ponto | null>(null);
     const [erro, setErro] = useState<ApiError | null>(null);
@@ -142,20 +146,25 @@ export function TelaDetalheDoacao({navigation, route}: TelaDetalheDoacaoProps) {
 
         try {
             setStatusAcao('excluindo');
-            await excluirDoacao(doacao.id);
+            await deletarDoacao(doacao.id);
+            Toast.show({
+                type: "success",
+                text1: 'Doação excluído com sucesso.',
+                bottomOffset: paddingInferior + 25
+            })
             try {
                 navigation.reset({
                     index: 0,
                     routes: [{name: 'Abas', params: {screen: 'Doações'}}],
                 });
-            } catch {
+            } catch (error) {
                 navigation.goBack();
             }
-        } catch {
+        } catch (error) {
             setStatusAcao('idle');
             Toast.show({
                 type: "error",
-                text1: 'Ocorreu um erro ao excluir a doação.'
+                text1: getMensagemErro(error, {fallback: 'Ocorreu um erro ao excluir a doação.'})
             })
         }
     }
