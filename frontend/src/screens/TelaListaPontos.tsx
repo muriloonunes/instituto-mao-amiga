@@ -7,9 +7,11 @@ import {
     RefreshControl,
     StyleSheet,
     Text,
+    TouchableOpacity,
     useWindowDimensions,
     View
 } from 'react-native';
+import MaterialDesignIcons from '@react-native-vector-icons/material-design-icons';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {CardPonto} from "../components/CardPonto";
 import {theme} from "../theme/theme";
@@ -204,7 +206,22 @@ export function TelaListaPontos({onNovoPonto, atualizacaoKey}: TelaListaPontosPr
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.titleText}>Pontos de Coleta</Text>
+            <View style={styles.headerContainer}>
+                <Text style={styles.titleText}>Pontos de Coleta</Text>
+                <TouchableOpacity
+                    style={styles.botaoFavoritos}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel="Meus pontos favoritos"
+                >
+                    <MaterialDesignIcons
+                        name="heart-outline"
+                        size={18}
+                        color={theme.colors.primaryVibrant}
+                    />
+                    <Text style={styles.botaoFavoritosTexto}>Meus pontos</Text>
+                </TouchableOpacity>
+            </View>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={styles.keyboardContainer}
@@ -257,12 +274,36 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: theme.colors.background,
     },
+    headerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: theme.spacing['2xl'],
+        marginTop: theme.spacing['2xl'],
+        marginBottom: theme.spacing.sm,
+    },
     titleText: {
         color: theme.colors.text,
         fontSize: theme.fontSize['4xl'],
         fontWeight: 'bold',
-        marginLeft: theme.spacing['2xl'],
-        marginTop: theme.spacing['2xl'],
+        flexShrink: 1,
+    },
+    botaoFavoritos: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: theme.spacing.sm,
+        paddingHorizontal: theme.spacing.xl,
+        paddingVertical: theme.spacing.sm,
+        minHeight: 44,
+        borderRadius: theme.borderRadius.full,
+        backgroundColor: theme.colors.surfaceElevated,
+        borderWidth: 1,
+        borderColor: theme.colors.borderMedium,
+    },
+    botaoFavoritosTexto: {
+        color: theme.colors.text,
+        fontSize: theme.fontSize.sm,
+        fontWeight: '600',
     },
     keyboardContainer: {
         flex: 1,
