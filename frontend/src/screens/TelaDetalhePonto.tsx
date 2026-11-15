@@ -22,6 +22,7 @@ import {ErroState} from '../components/ErroState';
 import {TelaDetalhePontoProps} from '../types/navigation';
 import {ModalCadastro} from "../components/ModalCadastro";
 import {StatusAcao} from "../types/utils";
+import {alternarFavorito, isFavoritado} from "../services/favoritosStorage";
 
 export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
     const {pontoId} = route.params;
@@ -34,13 +35,16 @@ export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
     const estaOcupado = statusAcao !== 'idle';
 
     const [ponto, setPonto] = useState<Ponto | undefined>(undefined);
+    const [isFavorito, setIsFavorito] = useState<boolean>(false);
     const [carregando, setCarregando] = useState(true);
     const [atualizando, setAtualizando] = useState(false);
     const [erro, setErro] = useState<ApiError | null>(null);
 
     const carregarPonto = useCallback(async () => {
         const response = await buscarPontoPorId(pontoId);
+        const isFavorito = await isFavoritado(response.id);
         setPonto(response);
+        setIsFavorito(isFavorito);
         setErro(null);
     }, [pontoId]);
 
@@ -149,11 +153,51 @@ export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
         }
     }
 
+    async function onToggleFavorito() {
+        if (!ponto) return
+
+        try {
+            const novoStatus = !isFavorito;
+            setIsFavorito(novoStatus);
+
+            await alternarFavorito(ponto.id);
+        } catch (error) {
+            setIsFavorito(isFavorito);
+            Toast.show({
+                type: "error",
+                text1: getMensagemErro(error, {fallback: 'Ocorreu um erro ao alterar o favorito.'}),
+            })
+        }
+    }
+
     useLayoutEffect(() => {
         if (ponto) {
             navigation.setOptions({
                 headerRight: () => (
                     <View style={styles.headerAcoes}>
+                        <Pressable
+                            style={({pressed}) => [
+                                styles.headerBotaoAcao,
+                                pressed && styles.headerBotaoAcaoPressionado,
+                            ]}
+                            onPress={onToggleFavorito}
+                            disabled={estaOcupado}
+                            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                            android_ripple={{
+                                color: theme.colors.primaryLight,
+                                borderless: true,
+                                radius: 20,
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel={isFavorito ? 'Remover ponto dos favoritos' : 'Adicionar ponto aos favoritos'}
+                            accessibilityState={{selected: isFavorito}}
+                        >
+                            <MaterialDesignIcons
+                                name={isFavorito ? "heart" : "heart-outline"}
+                                size={24}
+                                color={isFavorito ? theme.colors.primaryVibrant : theme.colors.textSecondary}
+                            />
+                        </Pressable>
                         <Pressable
                             style={({pressed}) => [
                                 styles.headerBotaoAcao,
@@ -200,7 +244,7 @@ export function TelaDetalhePonto({navigation, route}: TelaDetalhePontoProps) {
                 ),
             });
         }
-    }, [navigation, ponto]);
+    }, [navigation, ponto, isFavorito]);
 
     if (carregando) {
         return (

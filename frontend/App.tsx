@@ -9,6 +9,7 @@ import {TelaDetalheDoacao} from "./src/screens/TelaDetalheDoacao";
 import Toast from "react-native-toast-message";
 import {RootStackParamList} from "./src/types/navigation";
 import {toastConfig} from "./src/config/toastConfig";
+import {TelaMeusPontos} from "./src/screens/TelaMeusPontos";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -30,6 +31,11 @@ export default function App() {
                         name="Abas"
                         component={BottomBar}
                         options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name={"TelaMeusPontos"}
+                        component={TelaMeusPontos}
+                        options={{title: 'Pontos Favoritados'}}
                     />
                     <Stack.Screen
                         name="TelaDetalhePonto"
