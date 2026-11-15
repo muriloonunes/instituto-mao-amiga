@@ -4,7 +4,14 @@ import {Pressable, StyleSheet, Text, View} from "react-native";
 import {theme} from "../theme/theme";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 
-export function CardPonto({ponto, onPress}: { ponto: Ponto; onPress: () => void }) {
+interface CardPontoProps {
+    ponto: Ponto;
+    onPress: () => void;
+    isFavorito?: boolean;
+    onToggleFavorito?: (ponto: Ponto) => void;
+}
+
+export function CardPonto({ponto, onPress, isFavorito = false, onToggleFavorito}: CardPontoProps) {
     const enderecoCompleto = ponto.bairro
         ? `${ponto.endereco} • ${ponto.bairro}`
         : ponto.endereco;
@@ -30,10 +37,44 @@ export function CardPonto({ponto, onPress}: { ponto: Ponto; onPress: () => void 
                         {ponto.nome}
                     </Text>
                 </View>
-                <View style={[styles.badgeTipo, isDistribui ? styles.badgeDistribui : styles.badgeColeta]}>
-                    <Text style={[styles.badgeTipoTexto, isDistribui ? styles.badgeDistribuiTexto : styles.badgeColetaTexto]}>
-                        {badgeLabel}
-                    </Text>
+
+                <View style={styles.headerDireita}>
+                    <View style={[styles.badgeTipo, isDistribui ? styles.badgeDistribui : styles.badgeColeta]}>
+                        <Text
+                            style={[styles.badgeTipoTexto, isDistribui ? styles.badgeDistribuiTexto : styles.badgeColetaTexto]}>
+                            {badgeLabel}
+                        </Text>
+                    </View>
+
+                    {onToggleFavorito && (
+                        <Pressable
+                            onPress={(e) => {
+                                e.stopPropagation?.();
+                                onToggleFavorito(ponto);
+                            }}
+                            hitSlop={{top: 10, bottom: 10, left: 8, right: 10}}
+                            android_ripple={{
+                                color: theme.colors.primaryLight,
+                                borderless: true,
+                                radius: 18,
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel={isFavorito ? `Remover ${ponto.nome} dos favoritos` : `Favoritar ${ponto.nome}`}
+                            accessibilityState={{selected: isFavorito}}
+                            style={({pressed, hovered}: any) => [
+                                styles.botaoFavorito,
+                                isFavorito && styles.botaoFavoritoAtivo,
+                                hovered && styles.botaoFavoritoHover,
+                                pressed && styles.botaoFavoritoPressed,
+                            ]}
+                        >
+                            <MaterialDesignIcons
+                                name={isFavorito ? "heart" : "heart-outline"}
+                                size={18}
+                                color={isFavorito ? theme.colors.primaryVibrant : theme.colors.textMuted}
+                            />
+                        </Pressable>
+                    )}
                 </View>
             </View>
 
@@ -84,6 +125,34 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: theme.spacing.md,
+    },
+    headerDireita: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: theme.spacing.sm,
+        flexShrink: 0,
+    },
+    botaoFavorito: {
+        width: 32,
+        height: 32,
+        borderRadius: theme.borderRadius.full,
+        backgroundColor: theme.colors.surfaceElevated,
+        borderWidth: 1,
+        borderColor: theme.colors.borderSubtle,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    botaoFavoritoAtivo: {
+        backgroundColor: theme.colors.iconSurface,
+        borderColor: 'rgba(0, 179, 126, 0.3)',
+    },
+    botaoFavoritoHover: {
+        backgroundColor: theme.colors.surfaceHover,
+        borderColor: theme.colors.borderMedium,
+    },
+    botaoFavoritoPressed: {
+        transform: [{scale: 0.9}],
+        opacity: 0.8,
     },
     pontoInfo: {
         flexDirection: 'row',
