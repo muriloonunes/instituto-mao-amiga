@@ -92,7 +92,17 @@ No terminal do Expo, escolha como deseja abrir o aplicativo:
 - Pressione **`a`** para abrir no **Emulador Android** (`npx expo start --android`)
 - Pressione **`i`** para abrir no **Simulador iOS** (`npx expo start --ios`)
 - Pressione **`w`** para abrir no **Navegador Web** (`npx expo start --web`)
-- Ou escaneie o **QR Code** exibido no terminal utilizando o aplicativo **Expo Go** no seu dispositivo físico (certifique-se de que o celular e o computador estejam na mesma rede Wi-Fi para que o app se conecte automaticamente ao IP da API na porta `8080`).
+- Ou escaneie o **QR Code** exibido no terminal utilizando o aplicativo **Expo Go** no seu dispositivo físico.
+
+#### ⚙️ Onde trocar o IP do Servidor no App:
+Por padrão, o app detecta o IP da sua máquina automaticamente via Expo (`Constants.expoConfig.hostUri`). Caso esteja em dispositivo físico ou precise apontar para outro IP manual:
+1. Abra o arquivo [**`frontend/src/services/api.ts`**](frontend/src/services/api.ts).
+2. Na função `getBaseUrl()` (linhas 5 a 23), substitua a URL base pelo IP local da sua máquina:
+   ```typescript
+   // Exemplo para apontar manualmente:
+   return `http://192.168.1.100:8080/api/v1`;
+   ```
+*(Lembre-se de manter seu celular e computador conectados na mesma rede Wi-Fi).*
 
 ---
 
@@ -133,12 +143,28 @@ No terminal do Expo, escolha como deseja abrir o aplicativo:
 
 ---
 
-## 📋 Roteiro Rápido de Teste no App
+## ⏱️ Roteiro de Demonstração
 
-1. **Consultar Pontos de Coleta:** Na aba **Pontos**, visualize os pontos carregados da API, pesquise pelo nome ou toque em um card para ver endereço, horários e itens aceitos.
-2. **Registrar uma Doação:** Toque no botão central **`+`** na barra inferior, preencha o **Tipo de Item Doado**, a **Quantidade** e selecione o **Ponto de Destino**. Toque em **Salvar**.
-3. **Visualizar Histórico e Resumo:** Acesse a aba **Doações** para conferir o card de resumo geral e a lista de doações registradas.
-4. **Filtrar, Editar e Excluir:** Use a barra de busca para filtrar itens em tempo real, ou toque sobre uma doação para abrir os detalhes e testar as opções de **Editar Doação** e **Excluir Doação**.
+### 1. Pontos de Coleta (Buscar, Cadastrar, Editar e Excluir)
+1. **Buscar:** Na aba **Pontos**, utilize a barra de pesquisa para filtrar pontos existentes em tempo real.
+2. **Cadastrar:** Abra o modal pelo botão **`+`**, selecione a aba **Ponto**, preencha todos os campos obrigatórios (Nome, Endereço, Bairro, Horário e Tipo Coleta/Distribuição) e toque em **Salvar**. O novo ponto surgirá imediatamente na lista sem recarregar o app.
+3. **Editar:** Toque no ponto recém-criado para abrir os detalhes, clique no ícone de **Lápis** no topo direito, altere um campo (ex: Horário ou Nome) e toque em **Salvar alterações**. O detalhe e a listagem exibirão o novo valor.
+4. **Excluir:** No detalhe do ponto, toque no ícone de **Lixeira**, confirme a exclusão no alerta (`Alert.alert`) e veja o ponto sumir da listagem.
+
+### 2. Favoritar um Ponto
+1. **Favoritar:** Na lista de pontos ou nos detalhes, toque no botão de coração (**♡**) de um ponto. O ícone mudará para preenchido (**♥**).
+2. **Meus Pontos:** Toque no botão **Meus pontos** no topo da tela para acessar a tela dedicada. O ponto aparecerá listado (buscado diretamente na API pelo ID).
+3. **Persistência & Desmarcar:** Desmarque o favorito tocando no coração na tela **Meus pontos** (o card sumirá na hora do estado e do `AsyncStorage`). Ao fechar e reabrir o app, os favoritos permanecem preservados no aparelho.
+
+### 3. Doações (Cadastrar, Editar e Excluir)
+1. **Cadastrar:** Toque no botão **`+`**, selecione a aba **Doações**, preencha o tipo de item, quantidade (> 0), selecione um ponto e salve. Acesse a aba **Doações** para ver o item no topo do histórico e o card de resumo atualizado.
+2. **Editar:** Toque na doação para ver os detalhes, abra a edição pelo ícone de **Lápis**, altere a quantidade ou tipo e salve. A data original de criação permanece intacta.
+3. **Excluir:** Toque na **Lixeira**, confirme a exclusão e verifique a remoção da doação do histórico.
+
+### 4. Demonstração de Erros da API (400 e 404)
+1. **Cenário 400 (Bad Request):** No Swagger (`/swagger-ui.html`) ou pelo app (tentando salvar uma doação com quantidade 0 ou campos em branco via API), mostre a resposta HTTP 400 com as mensagens de validação do Bean Validation. No app, demonstre que o formulário não é fechado e mantém o que foi digitado.
+2. **Cenário 404 (Not Found):** No Swagger ou abrindo uma rota com ID inexistente (ex: `GET /api/v1/pontos/999999` ou `GET /api/v1/doacoes/999999`), mostre a resposta HTTP 404 ("Ponto não encontrado" / "Doação não encontrada"). Na tela de detalhes do app, mostre o estado de erro com a mensagem amigável.
 
 ---
+
 
